@@ -95,6 +95,7 @@ function DashboardPage({ user }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [voiceAutoStartSignal, setVoiceAutoStartSignal] = useState(0);
   const resultPanelRef = useRef(null);
+  const healthChatRef = useRef(null);
 
   const triggerDashboardRefresh = () => {
     setDashboardRefreshKey((prev) => prev + 1);
@@ -326,13 +327,21 @@ function DashboardPage({ user }) {
               <button
                 type="button"
                 onClick={() => {
+                  if (!user) {
+                    window.location.assign("/auth");
+                    return;
+                  }
+
                   setIsChatOpen(true);
                   setVoiceAutoStartSignal((prev) => prev + 1);
+                  if (healthChatRef.current?.startVoiceCapture) {
+                    healthChatRef.current.startVoiceCapture();
+                  }
                 }}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky px-5 py-3 font-semibold text-white transition hover:bg-sky/90"
               >
                 <MessageCircle className="h-5 w-5" />
-                Open Voice Chat
+                {user ? "Open Voice Chat" : "Login to Use Voice Chat"}
               </button>
             </div>
           </section>
@@ -430,42 +439,41 @@ function DashboardPage({ user }) {
         </div>
       </footer>
 
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-        <div
-          className={`w-[min(92vw,430px)] overflow-hidden rounded-2xl border border-white/20 bg-[#081426]/95 shadow-2xl backdrop-blur transition-all duration-200 ${
-            isChatOpen
-              ? "pointer-events-auto translate-y-0 opacity-100"
-              : "pointer-events-none translate-y-2 opacity-0"
-          }`}
-        >
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-            <p className="text-sm font-semibold text-cyan-100">VitalBit Chat</p>
-            <button
-              type="button"
-              onClick={() => setIsChatOpen(false)}
-              className="rounded-md border border-white/20 p-1 text-slate-200 hover:bg-white/10"
-              title="Close chat"
-            >
-              <X className="h-4 w-4" />
-            </button>
+      <div className="fixed bottom-6 right-6 z-[1200] flex flex-col items-end gap-3">
+        {isChatOpen && (
+          <div className="w-[min(92vw,430px)] overflow-hidden rounded-2xl border border-white/20 bg-[#081426]/95 shadow-2xl backdrop-blur transition-all duration-200">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <p className="text-sm font-semibold text-cyan-100">
+                VitalBit Chat
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsChatOpen(false)}
+                className="rounded-md border border-white/20 p-1 text-slate-200 hover:bg-white/10"
+                title="Close chat"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="max-h-[78vh] overflow-y-auto p-3">
+              <HealthChat
+                ref={healthChatRef}
+                user={user}
+                onMessage={triggerDashboardRefresh}
+                onVoiceResult={(next) => {
+                  setResult(next);
+                  triggerDashboardRefresh();
+                }}
+                onSymptomResult={(next) => {
+                  setResult(next);
+                  triggerDashboardRefresh();
+                }}
+                autoStartRecordingSignal={voiceAutoStartSignal}
+                chatOpen={isChatOpen}
+              />
+            </div>
           </div>
-          <div className="max-h-[78vh] overflow-y-auto p-3">
-            <HealthChat
-              user={user}
-              onMessage={triggerDashboardRefresh}
-              onVoiceResult={(next) => {
-                setResult(next);
-                triggerDashboardRefresh();
-              }}
-              onSymptomResult={(next) => {
-                setResult(next);
-                triggerDashboardRefresh();
-              }}
-              autoStartRecordingSignal={voiceAutoStartSignal}
-              chatOpen={isChatOpen}
-            />
-          </div>
-        </div>
+        )}
 
         <button
           type="button"

@@ -548,7 +548,7 @@ router.post('/voice-to-text', requireAuth, upload.single('audio'), async (req, r
       transcriptionAvailable: Boolean(transcript),
       warning: transcript
         ? null
-        : 'Could not transcribe audio. Configure STT_API_URL/STT_API_KEY, set GEMINI_API_KEY, or allow browser speech recognition.'
+        : 'Transcription is unavailable right now. Voice risk analysis is still available. Enable browser speech recognition or configure STT/Gemini for transcripts.'
     });
   } catch (error) {
     next(error);

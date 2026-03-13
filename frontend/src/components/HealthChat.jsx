@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { Mic, Send, Square } from "lucide-react";
 import api from "../lib/api";
 
@@ -89,18 +96,22 @@ function renderFormattedMessage(message) {
   });
 }
 
-function HealthChat({
-  user,
-  onMessage,
-  onVoiceResult,
-  onSymptomResult,
-  autoStartRecordingSignal,
-  chatOpen = true,
-}) {
+const HealthChat = forwardRef(function HealthChat(
+  {
+    user,
+    onMessage,
+    onVoiceResult,
+    onSymptomResult,
+    autoStartRecordingSignal,
+    chatOpen = true,
+  },
+  ref,
+) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
   const [chat, setChat] = useState([]);
   const [micStatus, setMicStatus] = useState("");
   const chatScrollRef = useRef(null);
@@ -108,6 +119,7 @@ function HealthChat({
   const mediaStreamRef = useRef(null);
   const audioChunksRef = useRef([]);
   const speechRecognitionRef = useRef(null);
+  const stopRequestedRef = useRef(false);
   const transcriptHintRef = useRef("");
   const finalTranscriptRef = useRef("");
   const interimTranscriptRef = useRef("");
@@ -193,13 +205,34 @@ function HealthChat({
     }
 
     if (data.warning) {
-      setMicStatus(data.warning);
+      setMicStatus(
+        "Voice captured, but transcript is unavailable right now. Showing voice-risk results.",
+      );
     } else if (data.symptomAnalysis) {
       setMicStatus("Prediction Results updated from voice input.");
+    } else if (data.voiceAnalysis?.risk) {
+      setMicStatus("Voice risk analyzed successfully.");
     } else {
       setMicStatus(
         "Voice analyzed, but symptoms were not detected in transcript.",
       );
+    }
+
+    if (!transcriptText && data.voiceAnalysis?.risk) {
+      const risk = String(data.voiceAnalysis.risk || "unknown")
+        .replace(/_/g, " ")
+        .toLowerCase();
+      const confidence = Math.round(
+        (Number(data.voiceAnalysis.confidence || 0) || 0) * 100,
+      );
+
+      setChat((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          message: `Voice risk result: **${risk}** (${confidence}% confidence). Speech transcript is unavailable right now. You can still continue with manual symptom text for deeper guidance.`,
+        },
+      ]);
     }
 
     if (transcriptText) {
@@ -239,8 +272,12 @@ function HealthChat({
     onMessage?.({ source: "voice-combined", data });
   };
 
-  const startMicRecording = async () => {
-    if (!user || isRecording || voiceProcessing) return;
+  const startMicRecording = useCallback(async () => {
+    if (!user) {
+      setMicStatus("Please login to use voice chat.");
+      return;
+    }
+    if (isRecording || voiceProcessing) return;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -249,6 +286,7 @@ function HealthChat({
         window.SpeechRecognition || window.webkitSpeechRecognition;
 
       audioChunksRef.current = [];
+      stopRequestedRef.current = false;
       transcriptHintRef.current = "";
       finalTranscriptRef.current = "";
       interimTranscriptRef.current = "";
@@ -298,6 +336,11 @@ function HealthChat({
         }
       };
 
+      recorder.onstart = () => {
+        setIsRecording(true);
+        setIsStopping(false);
+      };
+
       recorder.onerror = () => {
         setMicStatus("Could not capture audio. Please try again.");
         setIsRecording(false);
@@ -308,25 +351,29 @@ function HealthChat({
         const activeStream = mediaStreamRef.current;
 
         try {
+          if (!blob.size) {
+            setMicStatus("No audio captured. Please try recording again.");
+            return;
+          }
+
           setVoiceProcessing(true);
           setMicStatus("Analyzing recording...");
           await analyzeRecordedAudio(blob);
         } catch (error) {
-          setMicStatus(
-            error.response?.data?.error ||
-              "Could not transcribe voice. Please try again.",
-          );
+          setMicStatus(error.response?.data?.error || "Could not process voice.");
           setChat((prev) => [
             ...prev,
             {
               role: "assistant",
               message:
                 error.response?.data?.error ||
-                "Could not transcribe voice. Please try again.",
+                "Could not process voice at this moment. Please try again.",
             },
           ]);
         } finally {
           setVoiceProcessing(false);
+          setIsRecording(false);
+          setIsStopping(false);
           mediaRecorderRef.current = null;
           mediaStreamRef.current = null;
           audioChunksRef.current = [];
@@ -334,42 +381,79 @@ function HealthChat({
           finalTranscriptRef.current = "";
           interimTranscriptRef.current = "";
           speechRecognitionRef.current = null;
+          stopRequestedRef.current = false;
           activeStream?.getTracks().forEach((track) => track.stop());
         }
       };
 
       recorder.start();
-      setIsRecording(true);
       setMicStatus("Recording... click Stop when you are done.");
     } catch {
       setMicStatus("Microphone permission denied or unavailable.");
     }
-  };
+  }, [
+    isRecording,
+    onMessage,
+    onSymptomResult,
+    onVoiceResult,
+    user,
+    voiceProcessing,
+  ]);
 
-  const stopMicRecording = () => {
-    if (!isRecording) return;
+  const stopMicRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state === "inactive") {
+      setIsRecording(false);
+      setIsStopping(false);
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      return;
+    }
+    if (stopRequestedRef.current) return;
 
-    setIsRecording(false);
+    stopRequestedRef.current = true;
+    setIsStopping(true);
+    setMicStatus("Stopping recording...");
     try {
       speechRecognitionRef.current?.stop();
     } catch {
       // no-op
     }
-    const recorder = mediaRecorderRef.current;
-    if (recorder && recorder.state !== "inactive") {
-      recorder.stop();
+
+    try {
+      recorder.requestData();
+    } catch {
+      // no-op
     }
-  };
+
+    try {
+      recorder.stop();
+    } catch {
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      setIsRecording(false);
+      setIsStopping(false);
+      stopRequestedRef.current = false;
+    }
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      startVoiceCapture: () => {
+        startMicRecording();
+      },
+    }),
+    [startMicRecording],
+  );
 
   useEffect(() => {
-    if (!autoStartRecordingSignal) return;
+    if (!autoStartRecordingSignal || !chatOpen) return;
     startMicRecording();
-  }, [autoStartRecordingSignal]);
+  }, [autoStartRecordingSignal, chatOpen, startMicRecording]);
 
   useEffect(() => {
     if (chatOpen) return;
     stopMicRecording();
-  }, [chatOpen]);
+  }, [chatOpen, stopMicRecording]);
 
   useEffect(
     () => () => {
@@ -440,7 +524,7 @@ function HealthChat({
         <button
           type="button"
           onClick={startMicRecording}
-          disabled={!user || loading || voiceProcessing || isRecording}
+          disabled={!user || loading || voiceProcessing || isRecording || isStopping}
           className="rounded-lg border border-white/20 px-3 py-2 disabled:opacity-50"
           title="Start voice recording"
         >
@@ -450,10 +534,11 @@ function HealthChat({
           <button
             type="button"
             onClick={stopMicRecording}
-            className="rounded-lg bg-rose-500 px-3 py-2 text-white hover:bg-rose-600"
+            disabled={isStopping}
+            className="rounded-lg bg-rose-500 px-3 py-2 text-white hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
             title="Stop recording and analyze"
           >
-            <Square className="h-4 w-4" />
+            {isStopping ? "Stopping..." : <Square className="h-4 w-4" />}
           </button>
         )}
         <button
@@ -468,6 +553,6 @@ function HealthChat({
       {micStatus && <p className="mt-2 text-xs text-slate-300">{micStatus}</p>}
     </div>
   );
-}
+});
 
 export default HealthChat;

@@ -52,6 +52,8 @@ const symptomOptions = [
 
 function SymptomChecker({ onResult, setLoading }) {
   const [selected, setSelected] = useState(["fever", "fatigue"]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
 
   const inputText = useMemo(() => selected.join(" "), [selected]);
 
@@ -64,22 +66,31 @@ function SymptomChecker({ onResult, setLoading }) {
   };
 
   const handleAnalyze = async () => {
-    if (!selected.length) return;
+    if (!selected.length || isAnalyzing) return;
     try {
+      setIsAnalyzing(true);
+      setStatusMessage("");
       setLoading(true);
       const { data } = await api.post("/api/symptoms/analyze", {
         symptoms: inputText,
       });
       onResult({ type: "symptom", data });
     } catch (error) {
+      const fallbackError =
+        "Failed to analyze symptoms. Please ensure backend and AI service are running.";
+      const message =
+        error.response?.data?.error || error.message || fallbackError;
+
+      setStatusMessage(message);
       onResult({
         type: "symptom",
         data: {
-          error: error.response?.data?.error || "Failed to analyze symptoms",
+          error: message,
         },
       });
     } finally {
       setLoading(false);
+      setIsAnalyzing(false);
     }
   };
 
@@ -115,10 +126,14 @@ function SymptomChecker({ onResult, setLoading }) {
       <button
         type="button"
         onClick={handleAnalyze}
-        className="w-full rounded-xl bg-sky px-4 py-3 font-semibold text-white transition hover:bg-sky/90"
+        disabled={isAnalyzing || !selected.length}
+        className="w-full rounded-xl bg-sky px-4 py-3 font-semibold text-white transition hover:bg-sky/90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Analyze Symptoms
+        {isAnalyzing ? "Analyzing..." : "Analyze Symptoms"}
       </button>
+      {!!statusMessage && (
+        <p className="mt-3 text-sm text-rose-300">{statusMessage}</p>
+      )}
     </div>
   );
 }
