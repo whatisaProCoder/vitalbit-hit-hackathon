@@ -1,0 +1,12 @@
+node_modules/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+*.wav
+*.webm
+uploads/
+dist/
+.vite/
+*.log
+ai_service/models_weights/*.tmp

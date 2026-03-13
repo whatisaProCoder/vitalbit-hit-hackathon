@@ -1,0 +1,681 @@
+You are a senior full stack engineer, UI/UX designer, and ML engineer.
+
+Generate a full working project for an AI-powered healthcare assistant platform called **VitalBit**.
+
+The project must be production-quality, visually impressive, and fully functional.
+
+---
+
+TECH STACK
+
+Frontend:
+React + Vite
+TailwindCSS
+Untitled UI component library
+GSAP + ScrollTrigger for advanced scroll animations
+Axios for API requests
+OpenStreetMap + Leaflet
+
+Backend:
+Node.js + Express
+PostgreSQL database (connection string : postgresql://pritam_wsl:7865@localhost:5432/vitalbit)
+node-postgres (pg)
+
+AI Service:
+Python FastAPI microservice
+PyTorch
+Librosa for voice analysis
+
+---
+
+ARCHITECTURE
+
+React Frontend
+↓
+Node / Express API
+↓            ↓
+PostgreSQL   FastAPI AI microservice
+             ↓
+             PyTorch inference
+
+Frontend NEVER talks directly to FastAPI.
+Node backend acts as API gateway.
+
+---
+
+PROJECT PURPOSE
+
+VitalBit is an AI-powered health assistant that helps rural communities detect diseases early through symptom analysis and voice diagnostics.
+
+Core capabilities:
+
+AI Symptom Checker
+Voice Health Detection
+Health Guidance
+Hospital Locator
+Follow-up reminders
+
+---
+
+LANDING PAGE DESIGN
+
+The landing page must feel like **gsap.com**.
+
+Use **GSAP ScrollTrigger storytelling animations** with smooth, premium motion.
+
+Design inspiration:
+
+gsap.com
+stripe.com
+vercel.com
+apple product pages
+
+Visual style:
+
+large typography
+clean whitespace
+health-tech colors
+floating UI elements
+glassmorphism cards
+smooth parallax
+
+---
+
+LANDING PAGE SECTIONS
+
+Hero Section
+
+Large headline:
+"AI Health Assistant for Rural Communities"
+
+Subtext explaining early disease detection.
+
+Animated elements:
+
+floating UI cards
+animated gradient background
+hero elements entering with GSAP timeline
+
+Problem Section
+
+Explain rural healthcare challenges.
+
+Three blocks:
+
+Limited access
+Doctor shortages
+Lack of awareness
+
+Cards animate in with staggered GSAP animations.
+
+Solution Section
+
+Explain VitalBit solution.
+
+Three feature cards:
+
+AI Symptom Analysis
+Voice Health Detection
+Health Guidance
+
+Use Untitled UI cards.
+
+Feature Showcase
+
+Create a **GSAP pinned storytelling section**.
+
+As the user scrolls:
+
+cards animate one by one explaining the system:
+
+User Input
+Data Transmission
+AI Analysis
+Risk Prediction
+Health Guidance
+
+System Architecture
+
+Visual pipeline showing:
+
+Hardware Smartwatch
+→ Frontend
+→ Backend
+→ AI Model
+→ Health Prediction
+
+Demo Section
+
+Functional application area.
+
+Include:
+
+Symptom input form
+Voice recording button
+Results display panel
+
+Hospital Locator
+
+Map placeholder showing nearby hospitals.
+
+Footer
+
+Project details
+Team
+Tech stack
+
+---
+
+GSAP ANIMATIONS
+
+Use ScrollTrigger for:
+
+section reveal animations
+staggered card animations
+parallax background effects
+pinned storytelling section
+hero floating cards
+smooth transitions
+
+Animations must feel smooth and premium.
+
+---
+
+FUNCTIONAL FEATURES
+
+Symptom Checker
+
+User select symptoms from numerous predefined symptom chips.
+
+React sends request:
+
+POST /api/symptoms/analyze
+
+Voice Health Detection
+
+User records audio in browser.
+
+Audio sent to backend.
+
+Backend forwards to FastAPI.
+
+Prediction Results
+
+Return JSON:
+
+{
+predictions: [
+{ disease: "flu", probability: 0.62 },
+{ disease: "covid", probability: 0.28 }
+],
+confidence: 0.76
+}
+
+---
+
+BACKEND API
+
+Express routes:
+
+POST /api/symptoms/analyze
+POST /api/voice/analyze
+GET /api/hospitals
+POST /api/users
+
+Node backend forwards AI requests to FastAPI.
+
+Example:
+
+POST http://localhost:8000/predict/symptoms
+
+---
+
+POSTGRES DATABASE
+
+Tables:
+
+users
+symptom_queries
+voice_analysis_results
+
+Example schema:
+
+users
+id
+name
+language
+created_at
+
+symptom_queries
+id
+user_id
+symptoms_text
+prediction_json
+created_at
+
+voice_analysis_results
+id
+user_id
+audio_path
+prediction_json
+created_at
+
+---
+
+FASTAPI AI SERVICE
+
+Endpoints:
+
+POST /predict/symptoms
+POST /predict/voice
+
+Symptom model:
+
+Use simple PyTorch classifier or rule-based system mapping symptoms to diseases.
+
+Voice analysis:
+
+Use Librosa to extract MFCC features.
+
+Dummy PyTorch model returning respiratory risk score.
+
+---
+
+PROJECT STRUCTURE
+
+vitalbit(root)/
+  frontend/
+  backend/
+  ai_service/
+
+frontend/
+
+React app
+GSAP animations
+Untitled UI components
+Symptom form
+Voice recorder
+
+backend/
+
+Express server
+PostgreSQL connection
+API routes
+AI proxy requests
+
+ai_service/
+
+AI SERVICE (FASTAPI MICRO-SERVICE)
+
+Purpose
+Provide AI inference for two tasks:
+
+1. Symptom → disease prediction
+2. Voice → respiratory health detection
+
+No training should occur during the hackathon. Use **pretrained models with downloadable weights** so inference works immediately.
+
+Tech stack
+Python
+FastAPI
+PyTorch
+Sentence Transformers
+Librosa
+Scikit-learn
+Joblib
+
+---
+
+PROJECT STRUCTURE
+
+ai_service/
+
+main.py
+models/
+symptom_model.py
+voice_model.py
+models_weights/
+voice_model.pkl
+
+---
+
+SYMPTOM PREDICTION MODEL
+
+Use pretrained sentence embedding model:
+
+Model
+sentence-transformers/all-MiniLM-L6-v2
+
+Download / HuggingFace page
+https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+
+Python loading example:
+
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+Purpose
+
+Convert symptom text into semantic embeddings.
+
+Input example
+
+"fever cough fatigue"
+
+↓
+
+384-dimension embedding vector
+
+---
+
+DISEASE KNOWLEDGE BASE
+
+Create vast built-in disease symptom descriptions for similarity search.
+
+Example
+
+disease_profiles = {
+
+"flu": "fever cough sore throat fatigue headache",
+
+"covid": "fever dry cough breathing difficulty fatigue loss smell",
+
+"asthma": "shortness of breath chest tightness wheezing cough",
+
+"tuberculosis": "persistent cough chest pain weight loss fever",
+
+"malaria": "fever chills sweating headache nausea",
+
+"dengue": "high fever severe headache joint pain rash"
+
+}
+
+---
+
+SYMPTOM INFERENCE METHOD
+
+1 Encode user symptom text with MiniLM model
+2 Encode disease descriptions
+3 Compute cosine similarity
+4 Rank diseases by similarity
+
+Return top predictions.
+
+Example response
+
+{
+"predictions":[
+{"disease":"flu","probability":0.62},
+{"disease":"covid","probability":0.28}
+],
+"confidence":0.76
+}
+
+---
+
+VOICE HEALTH DETECTION MODEL
+
+Use pretrained respiratory classifier weights.
+
+Dataset reference (training source):
+
+Respiratory Sound Database
+https://www.kaggle.com/datasets/vbookshelf/respiratory-sound-database
+
+Pretrained model weights (example source):
+
+https://github.com/prateekrajgautam/Respiratory-Sound-Classification
+
+Download pretrained classifier and store as:
+
+models_weights/voice_model.pkl
+
+Model type
+
+Scikit-learn RandomForestClassifier
+
+Predicted classes
+
+Healthy
+Respiratory Issue
+
+---
+
+VOICE FEATURE EXTRACTION
+
+Use Librosa to extract features from audio.
+
+Features
+
+MFCC (40 coefficients)
+Spectral centroid
+Zero crossing rate
+
+Example
+
+import librosa
+
+y, sr = librosa.load(audio_file)
+
+mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
+
+features = mfcc.mean(axis=1)
+
+---
+
+VOICE INFERENCE PIPELINE
+
+Browser records voice
+↓
+Node backend receives audio
+↓
+Forward to FastAPI
+↓
+Librosa extracts MFCC features
+↓
+Load pretrained RandomForest classifier
+↓
+Predict respiratory risk
+↓
+Return JSON response
+
+---
+
+FASTAPI ENDPOINTS
+
+POST /predict/symptoms
+
+Input
+
+{
+"symptoms":"fever cough fatigue"
+}
+
+Response
+
+{
+predictions:[
+{disease:"flu",probability:0.62},
+{disease:"covid",probability:0.28}
+],
+confidence:0.76
+}
+
+---
+
+POST /predict/voice
+
+Input
+
+Audio file upload
+
+Response
+
+{
+risk:"respiratory_issue",
+confidence:0.72
+}
+
+---
+
+MODEL LOADING
+
+Load models once on FastAPI startup.
+
+Example
+
+symptom_embedder = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+voice_model = joblib.load("models_weights/voice_model.pkl")
+
+---
+
+DEPENDENCIES
+
+pip install:
+
+fastapi
+uvicorn
+torch
+sentence-transformers
+librosa
+scikit-learn
+joblib
+
+GOAL
+
+Provide lightweight CPU inference returning structured health predictions to the Node backend for the VitalBit healthcare assistant platform.
+
+---
+
+MAP INTEGRATION
+
+Use OpenStreetMap with Leaflet.js for displaying nearby hospitals.
+
+Library:
+Leaflet.js
+
+https://leafletjs.com/
+
+Map data source:
+OpenStreetMap
+
+https://www.openstreetmap.org/
+
+React integration library:
+react-leaflet
+
+https://react-leaflet.js.org/
+
+Purpose:
+Display nearby hospitals and clinics for rural healthcare users.
+
+---
+
+FEATURES
+
+Interactive map
+User location detection
+Hospital markers
+Popup showing hospital name and contact info
+Zoom and pan controls
+
+---
+
+DATA SOURCE
+
+Hospital data can come from:
+
+1. Static JSON dataset
+   or
+2. OpenStreetMap Overpass API
+
+Example Overpass API query:
+
+https://overpass-api.de/api/interpreter
+
+Query for hospitals near coordinates.
+
+---
+
+MAP COMPONENT
+
+React component:
+
+HospitalMap.jsx
+
+Uses react-leaflet to render:
+
+MapContainer
+TileLayer
+Marker
+Popup
+
+---
+
+MAP INTEGRATION
+
+Use OpenStreetMap tiles:
+
+https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+
+---
+
+OPTIONAL FEATURES
+
+Detect user location using browser geolocation.
+
+navigator.geolocation.getCurrentPosition()
+
+Center map on user location and show nearby hospitals.
+
+---
+
+BACKEND ROLE
+
+Node backend can optionally fetch hospital data using Overpass API and send results to frontend.
+
+Endpoint example:
+
+GET /api/hospitals?lat=xx&lon=yy
+
+
+---
+
+INCLUDE
+
+Complete folder structure
+Frontend code
+Backend server code
+FastAPI service code
+Database schema
+GSAP animation setup
+API integration examples
+Voice recording component
+Symptom form component
+
+---
+
+RUN INSTRUCTIONS
+
+Frontend
+
+npm install
+npm run dev
+
+Backend
+
+npm install
+node server.js
+
+AI service
+
+pip install fastapi uvicorn torch librosa
+uvicorn main:app --reload
+
+---
+
+GOAL
+
+Create a beautiful, functional AI healthcare platform with GSAP storytelling landing page and working backend APIs.

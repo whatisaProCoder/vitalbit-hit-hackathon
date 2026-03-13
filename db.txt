@@ -1,0 +1,1 @@
+DB_URI=postgresql://pritam_wsl:7865@localhost:5432/vitalbit
