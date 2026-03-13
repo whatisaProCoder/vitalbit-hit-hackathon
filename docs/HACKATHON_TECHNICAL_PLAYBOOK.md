@@ -29,8 +29,9 @@ Hardware Smartwatch (current: mock telemetry endpoint)
 React Frontend (Vite + Tailwind + GSAP + Leaflet)
                 |
                 v
-Node/Express API Gateway ------------------> PostgreSQL
-                |
+Node/Express API Gateway -------------------------------> PostgreSQL
+                |         \
+                |          ---> Gemini API (LLM + STT fallback)
                 v
 FastAPI AI Service (Symptom + Voice inference)
                 |
@@ -79,6 +80,18 @@ Models loaded at startup in FastAPI lifespan hook:
 
 - `SymptomPredictor` (semantic + lexical + age weighting)
 - `VoicePredictor` (sklearn model if available, else torch fallback head)
+
+### 2.5 Gemini API Responsibilities
+
+Gemini is integrated by the Node/Express gateway for language and transcription intelligence:
+
+- LLM reply generation for chat (`/api/chat/message`) when Gemini provider is enabled
+- Symptom extraction enhancement from natural language in chat
+- Multimodal speech-to-text fallback in `/api/chat/voice-to-text` when external STT is unavailable
+
+Important architecture rule:
+
+- Frontend does not call Gemini directly; all Gemini calls are centralized in backend routes for security and observability.
 
 ## 3) End-to-End Data Flows
 
