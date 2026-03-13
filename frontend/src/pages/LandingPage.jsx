@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -113,6 +113,7 @@ const architectureSteps = [
 
 function LandingPage({ user }) {
   const rootRef = useRef(null);
+  const [watchImageFailed, setWatchImageFailed] = useState(false);
 
   const handleLogout = () => {
     clearAuthToken();
@@ -134,6 +135,22 @@ function LandingPage({ user }) {
         delay: 0.25,
         duration: 0.9,
         ease: "power2.out",
+      });
+
+      gsap.from(".hero-watch", {
+        x: 40,
+        opacity: 0,
+        delay: 0.35,
+        duration: 1,
+        ease: "power3.out",
+      });
+
+      gsap.to(".hero-watch", {
+        y: -8,
+        duration: 2.8,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
       });
 
       gsap.utils.toArray(".reveal-section").forEach((section) => {
@@ -214,53 +231,88 @@ function LandingPage({ user }) {
           </div>
         </nav>
 
-        <div className="relative z-10 flex flex-col justify-center py-10">
-          <p className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-slate-100">
-            <Activity className="h-4 w-4 text-mint" />
-            VitalBit Health Intelligence
-          </p>
-          <h1 className="hero-title max-w-4xl text-5xl font-extrabold leading-tight md:text-7xl">
-            AI Health Assistant for{" "}
-            <span className="gradient-text">Rural Communities</span>
-          </h1>
-          <p className="hero-sub mt-8 max-w-2xl text-lg text-slate-200 md:text-xl">
-            Detect diseases early with symptom intelligence, voice diagnostics,
-            personalized guidance, and instant hospital discovery.
-          </p>
-          <div className="hero-sub mt-10 flex flex-wrap gap-4">
-            {user ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="rounded-xl bg-sky px-6 py-3 font-semibold text-white transition hover:bg-sky/90"
-                >
-                  Open Dashboard
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-6 py-3 font-semibold transition hover:bg-white/10"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/auth?mode=register"
-                  className="rounded-xl bg-sky px-6 py-3 font-semibold text-white transition hover:bg-sky/90"
-                >
-                  Register Now
-                </Link>
-                <Link
-                  to="/auth"
-                  className="rounded-xl border border-white/25 px-6 py-3 font-semibold"
-                >
-                  Login
-                </Link>
-              </>
-            )}
+        <div className="relative z-10 grid items-center gap-10 py-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="flex flex-col justify-center">
+            <p className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-slate-100">
+              <Activity className="h-4 w-4 text-mint" />
+              VitalBit Health Intelligence
+            </p>
+            <h1 className="hero-title max-w-4xl text-5xl font-extrabold leading-tight md:text-7xl">
+              AI Health Assistant for{" "}
+              <span className="gradient-text">Rural Communities</span>
+            </h1>
+            <p className="hero-sub mt-8 max-w-2xl text-lg text-slate-200 md:text-xl">
+              Detect diseases early with symptom intelligence, voice
+              diagnostics, personalized guidance, and instant hospital
+              discovery.
+            </p>
+            <div className="hero-sub mt-10 flex flex-wrap gap-4">
+              {user ? (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="rounded-xl bg-sky px-6 py-3 font-semibold text-white transition hover:bg-sky/90"
+                  >
+                    Open Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-6 py-3 font-semibold transition hover:bg-white/10"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/auth?mode=register"
+                    className="rounded-xl bg-sky px-6 py-3 font-semibold text-white transition hover:bg-sky/90"
+                  >
+                    Register Now
+                  </Link>
+                  <Link
+                    to="/auth"
+                    className="rounded-xl border border-white/25 px-6 py-3 font-semibold"
+                  >
+                    Login
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="hero-watch relative mx-auto h-[300px] w-full max-w-[360px] md:h-[360px] md:max-w-[390px] lg:h-[430px] lg:max-w-[420px]">
+            <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/20 blur-3xl" />
+
+            <div
+              className="absolute left-1/2 top-1/2 h-[300px] w-[120px] -translate-x-1/2 -translate-y-1/2 rounded-[999px] border border-cyan-200/20 bg-gradient-to-b from-cyan-200/15 via-white/5 to-cyan-200/10"
+              style={{ transform: "translate(-50%, -50%) rotate(-18deg)" }}
+            />
+            <div
+              className="absolute left-1/2 top-1/2 h-[300px] w-[120px] -translate-x-1/2 -translate-y-1/2 rounded-[999px] border border-cyan-200/15 bg-gradient-to-b from-cyan-200/10 via-white/5 to-cyan-200/5"
+              style={{ transform: "translate(-50%, -50%) rotate(18deg)" }}
+            />
+
+            <div
+              className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-[3rem] border border-white/30 bg-[#0b2038]/90"
+              style={{
+                transform:
+                  "translate(-50%, -50%) perspective(900px) rotateX(16deg) rotateY(-16deg)",
+                boxShadow:
+                  "0 36px 70px rgba(2, 8, 23, 0.65), 0 0 50px rgba(56, 189, 248, 0.2)",
+              }}
+            >
+              <div className="absolute inset-4 rounded-[2.2rem] border border-cyan-200/25 bg-gradient-to-b from-cyan-300/20 via-cyan-200/5 to-transparent" />
+              <div className="absolute left-6 top-6 h-6 w-24 rounded-full bg-white/20 blur-sm" />
+              <div className="absolute left-1/2 top-1/2 flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-cyan-200/35 bg-black/30 shadow-[inset_0_0_24px_rgba(56,189,248,0.18)]">
+                <Watch className="h-10 w-10 text-cyan-200" />
+              </div>
+              <div className="absolute bottom-7 left-1/2 -translate-x-1/2 text-xs uppercase tracking-[0.2em] text-cyan-200/80">
+                VitalBit
+              </div>
+            </div>
           </div>
         </div>
       </header>

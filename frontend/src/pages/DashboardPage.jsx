@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, ArrowLeft, LogOut } from "lucide-react";
+import {
+  Activity,
+  ArrowLeft,
+  CheckCircle2,
+  Github,
+  Globe,
+  Instagram,
+  Linkedin,
+  LogOut,
+  MessageCircle,
+  X,
+} from "lucide-react";
 import DashboardPanel from "../components/DashboardPanel";
 import SymptomChecker from "../components/SymptomChecker";
 import ResultPanel from "../components/ResultPanel";
@@ -81,6 +92,8 @@ function DashboardPage({ user }) {
   const [userLocation, setUserLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
   const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [voiceAutoStartSignal, setVoiceAutoStartSignal] = useState(0);
   const resultPanelRef = useRef(null);
 
   const triggerDashboardRefresh = () => {
@@ -211,7 +224,7 @@ function DashboardPage({ user }) {
   };
 
   return (
-    <div className="relative min-h-screen bg-base pb-16 text-white">
+    <div className="relative min-h-screen bg-base text-white">
       <div className="mx-auto w-[92%] max-w-7xl py-8">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur md:px-6">
           <div className="inline-flex items-center gap-2">
@@ -296,18 +309,33 @@ function DashboardPage({ user }) {
             }}
             setLoading={setLoading}
           />
-          <HealthChat
-            user={user}
-            onMessage={triggerDashboardRefresh}
-            onVoiceResult={(next) => {
-              setResult(next);
-              triggerDashboardRefresh();
-            }}
-            onSymptomResult={(next) => {
-              setResult(next);
-              triggerDashboardRefresh();
-            }}
-          />
+          <section className="rounded-2xl border border-cyan-200/25 bg-[#0b2742]/80 p-5 md:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-cyan-200/80">
+                  Voice Analysis
+                </p>
+                <h3 className="mt-1 text-xl font-bold text-white md:text-2xl">
+                  Get Health Analysis Using Voice
+                </h3>
+                <p className="mt-2 max-w-2xl text-slate-300">
+                  Open the assistant, record your voice, and get respiratory
+                  risk insights plus transcript-based symptom guidance.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsChatOpen(true);
+                  setVoiceAutoStartSignal((prev) => prev + 1);
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky px-5 py-3 font-semibold text-white transition hover:bg-sky/90"
+              >
+                <MessageCircle className="h-5 w-5" />
+                Open Voice Chat
+              </button>
+            </div>
+          </section>
           <div ref={resultPanelRef} className="scroll-mt-24 md:scroll-mt-28">
             <ResultPanel result={result} loading={loading} />
           </div>
@@ -326,6 +354,127 @@ function DashboardPage({ user }) {
           />
           <RecommendedHospitals recommendations={recommendedHospitals} />
         </section>
+      </div>
+
+      <footer className="border-t border-white/10 bg-[#050b14] py-16 md:py-20">
+        <div className="mx-auto flex w-[92%] max-w-7xl flex-col gap-10 md:flex-row md:items-start md:gap-20">
+          <div className="md:w-[32%]">
+            <h4 className="text-2xl font-bold">VitalBit</h4>
+            <p className="mt-2 text-slate-300 md:whitespace-nowrap">
+              AI-powered early disease detection for rural communities.
+            </p>
+            <p className="mt-3 text-slate-300">
+              Website:{" "}
+              <a
+                className="underline decoration-white/30 underline-offset-4 hover:text-white"
+                href="/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                www.vitalbit.com
+              </a>
+            </p>
+            <p className="mt-1 text-slate-300">
+              Address: Sector V, Kolkata, West Bengal 700091, India
+            </p>
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-mint/30 px-4 py-2 text-sm text-mint">
+              <CheckCircle2 className="h-4 w-4" />
+              Production-ready prototype
+            </div>
+          </div>
+          <div className="text-slate-300 md:flex-1">
+            <p className="mb-2 text-xs uppercase tracking-[0.18em] text-cyan-200/80">
+              Team Info
+            </p>
+            <p className="mb-1 text-lg font-semibold text-white">
+              Team VitalBit
+            </p>
+            <p className="mt-2">
+              Focus: AI triage, voice diagnostics, rural care accessibility.
+            </p>
+          </div>
+          <div className="text-slate-300 md:w-[22%]">
+            <p className="mb-2 text-xs uppercase tracking-[0.18em] text-cyan-200/80">
+              Socials
+            </p>
+            <div className="grid gap-2 text-sm">
+              <a
+                href="#"
+                className="inline-flex items-center gap-2 hover:text-white"
+              >
+                <Linkedin className="h-4 w-4" />
+                LinkedIn
+              </a>
+              <a
+                href="#"
+                className="inline-flex items-center gap-2 hover:text-white"
+              >
+                <Globe className="h-4 w-4" />X
+              </a>
+              <a
+                href="#"
+                className="inline-flex items-center gap-2 hover:text-white"
+              >
+                <Github className="h-4 w-4" />
+                GitHub
+              </a>
+              <a
+                href="#"
+                className="inline-flex items-center gap-2 hover:text-white"
+              >
+                <Instagram className="h-4 w-4" />
+                Instagram
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        <div
+          className={`w-[min(92vw,430px)] overflow-hidden rounded-2xl border border-white/20 bg-[#081426]/95 shadow-2xl backdrop-blur transition-all duration-200 ${
+            isChatOpen
+              ? "pointer-events-auto translate-y-0 opacity-100"
+              : "pointer-events-none translate-y-2 opacity-0"
+          }`}
+        >
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <p className="text-sm font-semibold text-cyan-100">VitalBit Chat</p>
+            <button
+              type="button"
+              onClick={() => setIsChatOpen(false)}
+              className="rounded-md border border-white/20 p-1 text-slate-200 hover:bg-white/10"
+              title="Close chat"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="max-h-[78vh] overflow-y-auto p-3">
+            <HealthChat
+              user={user}
+              onMessage={triggerDashboardRefresh}
+              onVoiceResult={(next) => {
+                setResult(next);
+                triggerDashboardRefresh();
+              }}
+              onSymptomResult={(next) => {
+                setResult(next);
+                triggerDashboardRefresh();
+              }}
+              autoStartRecordingSignal={voiceAutoStartSignal}
+              chatOpen={isChatOpen}
+            />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsChatOpen((prev) => !prev)}
+          className="inline-flex items-center gap-2 rounded-full bg-sky px-5 py-3 font-semibold text-white shadow-lg transition hover:bg-sky/90"
+        >
+          <MessageCircle className="h-5 w-5" />
+          {isChatOpen ? "Close Chat" : "Open Chat"}
+        </button>
       </div>
     </div>
   );

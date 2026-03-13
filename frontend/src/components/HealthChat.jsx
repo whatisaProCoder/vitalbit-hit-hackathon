@@ -89,7 +89,14 @@ function renderFormattedMessage(message) {
   });
 }
 
-function HealthChat({ user, onMessage, onVoiceResult, onSymptomResult }) {
+function HealthChat({
+  user,
+  onMessage,
+  onVoiceResult,
+  onSymptomResult,
+  autoStartRecordingSignal,
+  chatOpen = true,
+}) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [voiceProcessing, setVoiceProcessing] = useState(false);
@@ -353,6 +360,16 @@ function HealthChat({ user, onMessage, onVoiceResult, onSymptomResult }) {
       recorder.stop();
     }
   };
+
+  useEffect(() => {
+    if (!autoStartRecordingSignal) return;
+    startMicRecording();
+  }, [autoStartRecordingSignal]);
+
+  useEffect(() => {
+    if (chatOpen) return;
+    stopMicRecording();
+  }, [chatOpen]);
 
   useEffect(
     () => () => {
