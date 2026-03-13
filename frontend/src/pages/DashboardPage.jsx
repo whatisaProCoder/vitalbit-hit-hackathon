@@ -332,10 +332,13 @@ function DashboardPage({ user }) {
                     return;
                   }
 
+                  const alreadyOpen = isChatOpen;
                   setIsChatOpen(true);
-                  setVoiceAutoStartSignal((prev) => prev + 1);
-                  if (healthChatRef.current?.startVoiceCapture) {
+
+                  if (alreadyOpen && healthChatRef.current?.startVoiceCapture) {
                     healthChatRef.current.startVoiceCapture();
+                  } else {
+                    setVoiceAutoStartSignal((prev) => prev + 1);
                   }
                 }}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky px-5 py-3 font-semibold text-white transition hover:bg-sky/90"

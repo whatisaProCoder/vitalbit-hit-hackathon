@@ -119,7 +119,9 @@ const HealthChat = forwardRef(function HealthChat(
   const mediaStreamRef = useRef(null);
   const audioChunksRef = useRef([]);
   const speechRecognitionRef = useRef(null);
+  const startRequestedRef = useRef(false);
   const stopRequestedRef = useRef(false);
+  const lastAutoStartSignalRef = useRef(0);
   const transcriptHintRef = useRef("");
   const finalTranscriptRef = useRef("");
   const interimTranscriptRef = useRef("");
@@ -277,7 +279,10 @@ const HealthChat = forwardRef(function HealthChat(
       setMicStatus("Please login to use voice chat.");
       return;
     }
-    if (isRecording || voiceProcessing) return;
+    if (isRecording || voiceProcessing || isStopping || startRequestedRef.current)
+      return;
+
+    startRequestedRef.current = true;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -339,11 +344,14 @@ const HealthChat = forwardRef(function HealthChat(
       recorder.onstart = () => {
         setIsRecording(true);
         setIsStopping(false);
+        startRequestedRef.current = false;
       };
 
       recorder.onerror = () => {
         setMicStatus("Could not capture audio. Please try again.");
         setIsRecording(false);
+        setIsStopping(false);
+        startRequestedRef.current = false;
       };
 
       recorder.onstop = async () => {
@@ -360,7 +368,9 @@ const HealthChat = forwardRef(function HealthChat(
           setMicStatus("Analyzing recording...");
           await analyzeRecordedAudio(blob);
         } catch (error) {
-          setMicStatus(error.response?.data?.error || "Could not process voice.");
+          setMicStatus(
+            error.response?.data?.error || "Could not process voice.",
+          );
           setChat((prev) => [
             ...prev,
             {
@@ -374,6 +384,7 @@ const HealthChat = forwardRef(function HealthChat(
           setVoiceProcessing(false);
           setIsRecording(false);
           setIsStopping(false);
+          startRequestedRef.current = false;
           mediaRecorderRef.current = null;
           mediaStreamRef.current = null;
           audioChunksRef.current = [];
@@ -389,10 +400,12 @@ const HealthChat = forwardRef(function HealthChat(
       recorder.start();
       setMicStatus("Recording... click Stop when you are done.");
     } catch {
+      startRequestedRef.current = false;
       setMicStatus("Microphone permission denied or unavailable.");
     }
   }, [
     isRecording,
+    isStopping,
     onMessage,
     onSymptomResult,
     onVoiceResult,
@@ -405,6 +418,8 @@ const HealthChat = forwardRef(function HealthChat(
     if (!recorder || recorder.state === "inactive") {
       setIsRecording(false);
       setIsStopping(false);
+      stopRequestedRef.current = false;
+      startRequestedRef.current = false;
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
       return;
     }
@@ -412,6 +427,7 @@ const HealthChat = forwardRef(function HealthChat(
 
     stopRequestedRef.current = true;
     setIsStopping(true);
+    setIsRecording(false);
     setMicStatus("Stopping recording...");
     try {
       speechRecognitionRef.current?.stop();
@@ -431,8 +447,13 @@ const HealthChat = forwardRef(function HealthChat(
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
       setIsRecording(false);
       setIsStopping(false);
+      startRequestedRef.current = false;
       stopRequestedRef.current = false;
+      return;
     }
+
+    // Ensure mic hardware is released immediately on first click.
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
   }, []);
 
   useImperativeHandle(
@@ -447,8 +468,11 @@ const HealthChat = forwardRef(function HealthChat(
 
   useEffect(() => {
     if (!autoStartRecordingSignal || !chatOpen) return;
+    if (autoStartRecordingSignal === lastAutoStartSignalRef.current) return;
+
+    lastAutoStartSignalRef.current = autoStartRecordingSignal;
     startMicRecording();
-  }, [autoStartRecordingSignal, chatOpen, startMicRecording]);
+  }, [autoStartRecordingSignal, chatOpen]);
 
   useEffect(() => {
     if (chatOpen) return;
@@ -465,6 +489,7 @@ const HealthChat = forwardRef(function HealthChat(
       } catch {
         // no-op
       }
+      startRequestedRef.current = false;
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     },
     [],
@@ -524,7 +549,9 @@ const HealthChat = forwardRef(function HealthChat(
         <button
           type="button"
           onClick={startMicRecording}
-          disabled={!user || loading || voiceProcessing || isRecording || isStopping}
+          disabled={
+            !user || loading || voiceProcessing || isRecording || isStopping
+          }
           className="rounded-lg border border-white/20 px-3 py-2 disabled:opacity-50"
           title="Start voice recording"
         >
