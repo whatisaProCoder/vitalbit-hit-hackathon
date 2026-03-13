@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, ArrowLeft } from "lucide-react";
+import { Activity, ArrowLeft, LogOut } from "lucide-react";
 import DashboardPanel from "../components/DashboardPanel";
 import SymptomChecker from "../components/SymptomChecker";
 import ResultPanel from "../components/ResultPanel";
@@ -9,7 +9,7 @@ import HealthChat from "../components/HealthChat";
 import VitalsTrends from "../components/VitalsTrends";
 import HospitalMap from "../components/HospitalMap";
 import RecommendedHospitals from "../components/RecommendedHospitals";
-import api from "../lib/api";
+import api, { clearAuthToken } from "../lib/api";
 
 const defaultCenter = [22.5726, 88.3639];
 
@@ -205,6 +205,11 @@ function DashboardPage({ user }) {
     [recommendedHospitals],
   );
 
+  const handleLogout = () => {
+    clearAuthToken();
+    window.location.assign("/");
+  };
+
   return (
     <div className="relative min-h-screen bg-base pb-16 text-white">
       <div className="mx-auto w-[92%] max-w-7xl py-8">
@@ -235,6 +240,16 @@ function DashboardPage({ user }) {
               <ArrowLeft className="h-4 w-4" />
               Back to Landing
             </Link>
+            {user && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            )}
           </div>
         </div>
 
