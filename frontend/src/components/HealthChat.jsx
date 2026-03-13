@@ -279,7 +279,12 @@ const HealthChat = forwardRef(function HealthChat(
       setMicStatus("Please login to use voice chat.");
       return;
     }
-    if (isRecording || voiceProcessing || isStopping || startRequestedRef.current)
+    if (
+      isRecording ||
+      voiceProcessing ||
+      isStopping ||
+      startRequestedRef.current
+    )
       return;
 
     startRequestedRef.current = true;
