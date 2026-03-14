@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   postal_code TEXT,
   phone TEXT,
   language TEXT DEFAULT 'en',
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
@@ -51,22 +51,37 @@ BEGIN
     ALTER TABLE users ADD CONSTRAINT users_phone_key UNIQUE (phone);
   END IF;
 END $$;
+ALTER TABLE users
+  ALTER COLUMN created_at TYPE TIMESTAMPTZ
+  USING created_at AT TIME ZONE 'UTC';
+ALTER TABLE users
+  ALTER COLUMN created_at SET DEFAULT NOW();
 
 CREATE TABLE IF NOT EXISTS symptom_queries (
   id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(id) ON DELETE SET NULL,
   symptoms_text TEXT NOT NULL,
   prediction_json JSONB NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE symptom_queries
+  ALTER COLUMN created_at TYPE TIMESTAMPTZ
+  USING created_at AT TIME ZONE 'UTC';
+ALTER TABLE symptom_queries
+  ALTER COLUMN created_at SET DEFAULT NOW();
 
 CREATE TABLE IF NOT EXISTS voice_analysis_results (
   id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(id) ON DELETE SET NULL,
   audio_path TEXT NOT NULL,
   prediction_json JSONB NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE voice_analysis_results
+  ALTER COLUMN created_at TYPE TIMESTAMPTZ
+  USING created_at AT TIME ZONE 'UTC';
+ALTER TABLE voice_analysis_results
+  ALTER COLUMN created_at SET DEFAULT NOW();
 
 CREATE TABLE IF NOT EXISTS user_metrics (
   id SERIAL PRIMARY KEY,
@@ -74,8 +89,13 @@ CREATE TABLE IF NOT EXISTS user_metrics (
   metric_type TEXT NOT NULL,
   metric_value DOUBLE PRECISION NOT NULL,
   metric_payload JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE user_metrics
+  ALTER COLUMN created_at TYPE TIMESTAMPTZ
+  USING created_at AT TIME ZONE 'UTC';
+ALTER TABLE user_metrics
+  ALTER COLUMN created_at SET DEFAULT NOW();
 
 CREATE TABLE IF NOT EXISTS chat_messages (
   id SERIAL PRIMARY KEY,
@@ -84,5 +104,10 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   message TEXT NOT NULL,
   extracted_symptoms JSONB DEFAULT '[]'::jsonb,
   metadata JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE chat_messages
+  ALTER COLUMN created_at TYPE TIMESTAMPTZ
+  USING created_at AT TIME ZONE 'UTC';
+ALTER TABLE chat_messages
+  ALTER COLUMN created_at SET DEFAULT NOW();

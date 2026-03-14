@@ -1,10 +1,14 @@
 from pathlib import Path
 from typing import Dict
+import subprocess
+import tempfile
+import os
 
 import joblib
 import librosa
 import numpy as np
 import torch
+import imageio_ffmpeg
 
 
 MODEL_PATH = Path(__file__).resolve().parent.parent / "models_weights" / "voice_model.pkl"
@@ -38,7 +42,7 @@ class VoicePredictor:
                 self.classifier = None
 
     def _extract_features(self, audio_path: str) -> np.ndarray:
-        y, sr = librosa.load(audio_path, sr=16000)
+        y, sr = self._safe_load_audio(audio_path)
         mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
         mfcc_mean = mfcc.mean(axis=1)
 
@@ -47,6 +51,41 @@ class VoicePredictor:
 
         features = np.concatenate([mfcc_mean, np.array([spectral_centroid, zcr])], axis=0)
         return features.astype(np.float32)
+
+    def _safe_load_audio(self, audio_path: str):
+        try:
+            return librosa.load(audio_path, sr=16000)
+        except Exception as original_error:
+            tmp_wav_path = None
+            try:
+                ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp_wav:
+                    tmp_wav_path = tmp_wav.name
+
+                subprocess.run(
+                    [
+                        ffmpeg_exe,
+                        '-y',
+                        '-i',
+                        audio_path,
+                        '-ac',
+                        '1',
+                        '-ar',
+                        '16000',
+                        tmp_wav_path
+                    ],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+                return librosa.load(tmp_wav_path, sr=16000)
+            except Exception as conversion_error:
+                raise RuntimeError(
+                    f"Unsupported or corrupt audio format. Original load failed: {original_error}; ffmpeg conversion failed: {conversion_error}"
+                ) from conversion_error
+            finally:
+                if tmp_wav_path and os.path.exists(tmp_wav_path):
+                    os.remove(tmp_wav_path)
 
     def predict(self, audio_path: str) -> Dict:
         features = self._extract_features(audio_path)

@@ -17,6 +17,7 @@ voice_predictor = None
 class SymptomRequest(BaseModel):
     symptoms: str
     age: Optional[int] = Field(default=None, ge=0, le=120)
+    symptomDays: Optional[int] = Field(default=None, ge=1, le=180)
 
 
 @asynccontextmanager
@@ -40,7 +41,11 @@ def predict_symptoms(payload: SymptomRequest):
     if not payload.symptoms.strip():
         raise HTTPException(status_code=400, detail="symptoms cannot be empty")
 
-    return symptom_predictor.predict(payload.symptoms, age=payload.age)
+    return symptom_predictor.predict(
+        payload.symptoms,
+        age=payload.age,
+        symptom_days=payload.symptomDays
+    )
 
 
 @app.post('/predict/voice')

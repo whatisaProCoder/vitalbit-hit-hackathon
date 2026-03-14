@@ -110,6 +110,20 @@ function DashboardPage({ user }) {
     });
   }, []);
 
+  const mergeChatAnalysisResult = useCallback((partial) => {
+    setResult((previous) => {
+      const previousData = previous?.type === "chat-combined" ? previous.data : {};
+      return {
+        type: "chat-combined",
+        data: {
+          ...previousData,
+          ...partial,
+        },
+      };
+    });
+    scrollToResultPanel();
+  }, [scrollToResultPanel]);
+
   const fetchHospitalsByCoords = useCallback(async (lat, lon) => {
     try {
       const { data } = await api.get("/api/hospitals", {
@@ -464,11 +478,11 @@ function DashboardPage({ user }) {
                 user={user}
                 onMessage={triggerDashboardRefresh}
                 onVoiceResult={(next) => {
-                  setResult(next);
+                  mergeChatAnalysisResult({ voiceAnalysis: next?.data || null });
                   triggerDashboardRefresh();
                 }}
                 onSymptomResult={(next) => {
-                  setResult(next);
+                  mergeChatAnalysisResult({ symptomAnalysis: next?.data || null });
                   triggerDashboardRefresh();
                 }}
                 autoStartRecordingSignal={voiceAutoStartSignal}

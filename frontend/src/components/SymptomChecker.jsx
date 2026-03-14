@@ -52,6 +52,7 @@ const symptomOptions = [
 
 function SymptomChecker({ onResult, setLoading }) {
   const [selected, setSelected] = useState(["fever", "fatigue"]);
+  const [symptomDays, setSymptomDays] = useState(3);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
 
@@ -67,12 +68,20 @@ function SymptomChecker({ onResult, setLoading }) {
 
   const handleAnalyze = async () => {
     if (!selected.length || isAnalyzing) return;
+
+    const parsedDays = Number(symptomDays);
+    if (!Number.isInteger(parsedDays) || parsedDays < 1 || parsedDays > 180) {
+      setStatusMessage("Please enter symptom duration between 1 and 180 days.");
+      return;
+    }
+
     try {
       setIsAnalyzing(true);
       setStatusMessage("");
       setLoading(true);
       const { data } = await api.post("/api/symptoms/analyze", {
         symptoms: inputText,
+        symptomDays: parsedDays,
       });
       onResult({ type: "symptom", data });
     } catch (error) {
@@ -104,6 +113,24 @@ function SymptomChecker({ onResult, setLoading }) {
         Select symptoms and get ranked disease predictions powered by semantic
         AI matching.
       </p>
+      <div className="mb-4 rounded-xl border border-white/10 bg-black/20 p-3">
+        <label htmlFor="symptomDays" className="mb-2 block text-sm font-medium text-slate-100">
+          How many days have you had these symptoms?
+        </label>
+        <input
+          id="symptomDays"
+          type="number"
+          min="1"
+          max="180"
+          value={symptomDays}
+          onChange={(e) => setSymptomDays(e.target.value)}
+          className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400"
+          placeholder="Enter days (e.g., 3)"
+        />
+        <p className="mt-1 text-xs text-slate-300">
+          Duration helps AI separate short-term infections from longer-term conditions.
+        </p>
+      </div>
       <div className="mb-4 flex flex-wrap gap-2">
         {symptomOptions.map((symptom) => {
           const active = selected.includes(symptom);

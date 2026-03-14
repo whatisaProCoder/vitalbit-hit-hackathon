@@ -415,7 +415,48 @@ class SymptomPredictor:
 
         return weights
 
-    def predict(self, symptoms: str, top_k: int = 3, age=None):
+    def _duration_weight_vector(self, symptom_days):
+        weights = torch.ones(len(self.diseases), dtype=torch.float32)
+        if symptom_days is None:
+            return weights
+
+        try:
+            days = int(symptom_days)
+        except (TypeError, ValueError):
+            return weights
+
+        short_duration = days <= 3
+        medium_duration = 4 <= days <= 7
+        long_duration = days > 7
+
+        disease_weight_by_duration = {
+            "flu": 1.15 if short_duration else (0.97 if long_duration else 1.03),
+            "covid": 1.08 if medium_duration else 1.0,
+            "malaria": 1.1 if medium_duration else 1.0,
+            "dengue": 1.1 if short_duration else 1.0,
+            "gastroenteritis": 1.12 if short_duration else 0.98,
+            "dehydration": 1.1 if short_duration else 1.0,
+            "sinusitis": 1.12 if long_duration else 0.98,
+            "bronchitis": 1.1 if long_duration else 0.99,
+            "tuberculosis": 1.2 if long_duration else 0.92,
+            "asthma": 1.1 if long_duration else 1.0,
+            "allergy": 1.1 if long_duration else 0.97,
+            "anemia": 1.1 if long_duration else 0.96,
+            "diabetes_warning": 1.16 if long_duration else 0.94,
+            "hypertension_warning": 1.14 if long_duration else 0.95,
+            "urinary_tract_infection": 1.06 if medium_duration else 1.0,
+            "pneumonia": 1.08 if medium_duration else 1.0,
+            "typhoid": 1.1 if medium_duration else 1.0,
+            "migraine": 1.06 if long_duration else 1.0,
+            "otitis": 1.08 if short_duration else 1.0,
+        }
+
+        for i, disease in enumerate(self.diseases):
+            weights[i] = disease_weight_by_duration.get(disease, 1.0)
+
+        return weights
+
+    def predict(self, symptoms: str, top_k: int = 3, age=None, symptom_days=None):
         input_embedding = self.embedder.encode(symptoms, convert_to_tensor=True)
         input_embedding = torch.nn.functional.normalize(input_embedding, p=2, dim=0)
 
@@ -425,6 +466,7 @@ class SymptomPredictor:
 
         combined_scores = (0.4 * semantic_scores) + (0.6 * keyword_scores)
         combined_scores = combined_scores * self._age_weight_vector(age).to(combined_scores.device)
+        combined_scores = combined_scores * self._duration_weight_vector(symptom_days).to(combined_scores.device)
         top_values, top_indices = torch.topk(combined_scores, k=min(top_k, len(self.diseases)))
 
         probs = torch.softmax(top_values / self.temperature, dim=0)
@@ -457,6 +499,7 @@ class SymptomPredictor:
             "predictions": predictions,
             "confidence": confidence,
             "ageUsed": age,
+            "symptomDaysUsed": symptom_days,
             "topDisease": top_disease,
             "recommendedTests": recommended_tests,
             "testsRequiringDoctorApproval": tests_requiring_approval,

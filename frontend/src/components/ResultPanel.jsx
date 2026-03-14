@@ -10,6 +10,20 @@ function ResultPanel({ result, loading }) {
     window.open(mapsUrl, "_blank", "noopener,noreferrer");
   };
 
+  const symptomPayload =
+    result?.type === "symptom"
+      ? result?.data
+      : result?.type === "chat-combined"
+        ? result?.data?.symptomAnalysis
+        : null;
+
+  const voicePayload =
+    result?.type === "voice"
+      ? result?.data
+      : result?.type === "chat-combined"
+        ? result?.data?.voiceAnalysis
+        : null;
+
   return (
     <div className="glass rounded-2xl p-6">
       <div className="mb-3 flex items-center gap-2">
@@ -31,9 +45,9 @@ function ResultPanel({ result, loading }) {
         <p className="text-rose-300">{result.data.error}</p>
       )}
 
-      {!loading && result?.type === "symptom" && result?.data?.predictions && (
+      {!loading && symptomPayload?.predictions && (
         <div className="space-y-3">
-          {result.data.predictions.map((item) => (
+          {symptomPayload.predictions.map((item) => (
             <div key={item.disease} className="rounded-xl bg-white/5 p-3">
               <div className="mb-1 flex items-center justify-between">
                 <p className="font-semibold capitalize">{item.disease}</p>
@@ -96,23 +110,23 @@ function ResultPanel({ result, loading }) {
             </div>
           ))}
           <p className="text-sm text-slate-300">
-            Confidence: {Math.round((result.data.confidence || 0) * 100)}%
+            Confidence: {Math.round((symptomPayload.confidence || 0) * 100)}%
           </p>
-          {!!result.data.testsRequiringDoctorApproval?.length && (
+          {!!symptomPayload.testsRequiringDoctorApproval?.length && (
             <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 text-sm text-amber-100">
               <p className="font-semibold">Doctor approval required for:</p>
               <p>
-                {result.data.testsRequiringDoctorApproval
+                {symptomPayload.testsRequiringDoctorApproval
                   .map((testItem) => testItem.test)
                   .join(", ")}
               </p>
             </div>
           )}
-          {!!result.data.testsWithoutDoctorApproval?.length && (
+          {!!symptomPayload.testsWithoutDoctorApproval?.length && (
             <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">
               <p className="font-semibold">Tests available without doctor approval:</p>
               <p>
-                {result.data.testsWithoutDoctorApproval
+                {symptomPayload.testsWithoutDoctorApproval
                   .map((testItem) => testItem.test)
                   .join(", ")}
               </p>
@@ -121,16 +135,16 @@ function ResultPanel({ result, loading }) {
         </div>
       )}
 
-      {!loading && result?.type === "voice" && result?.data?.risk && (
+      {!loading && voicePayload?.risk && (
         <div className="rounded-xl bg-white/5 p-4">
           <p className="mb-1 text-sm uppercase tracking-wide text-slate-300">
             Respiratory Risk
           </p>
           <p className="text-2xl font-bold capitalize text-mint">
-            {result.data.risk.replace("_", " ")}
+            {voicePayload.risk.replace("_", " ")}
           </p>
           <p className="mt-2 text-slate-200">
-            Confidence: {Math.round((result.data.confidence || 0) * 100)}%
+            Confidence: {Math.round((voicePayload.confidence || 0) * 100)}%
           </p>
         </div>
       )}

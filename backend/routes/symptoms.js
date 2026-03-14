@@ -8,11 +8,19 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
 router.post('/analyze', optionalAuth, async (req, res, next) => {
   try {
-    const { userId = null, symptoms } = req.body;
+    const { userId = null, symptoms, symptomDays = null } = req.body;
     const resolvedUserId = req.user?.id || userId;
 
     if (!symptoms || typeof symptoms !== 'string') {
       return res.status(400).json({ error: 'symptoms is required and must be a string' });
+    }
+
+    let parsedSymptomDays = null;
+    if (symptomDays !== null && symptomDays !== undefined && String(symptomDays).trim() !== '') {
+      parsedSymptomDays = Number(symptomDays);
+      if (!Number.isInteger(parsedSymptomDays) || parsedSymptomDays < 1 || parsedSymptomDays > 180) {
+        return res.status(400).json({ error: 'symptomDays must be an integer between 1 and 180' });
+      }
     }
 
     let storedAge = null;
@@ -23,7 +31,8 @@ router.post('/analyze', optionalAuth, async (req, res, next) => {
 
     const { data } = await axios.post(`${AI_SERVICE_URL}/predict/symptoms`, {
       symptoms,
-      age: storedAge
+      age: storedAge,
+      symptomDays: parsedSymptomDays
     });
 
     try {

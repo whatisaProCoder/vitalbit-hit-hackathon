@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { jsPDF } from "jspdf";
 import {
   Activity,
   ArrowLeft,
@@ -28,9 +29,83 @@ function SectionCard({ title, icon: Icon, count, children }) {
   );
 }
 
+function parseBackendTimestamp(value) {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const hasTimezone = /[zZ]|[+-]\d{2}:?\d{2}$/.test(raw);
+  const normalized = hasTimezone ? raw : `${raw}Z`;
+  const parsed = new Date(normalized);
+
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+const CLIENT_TIME_ZONE =
+  Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+
 function formatTime(value) {
-  if (!value) return "Unknown time";
-  return new Date(value).toLocaleString();
+  const parsed = parseBackendTimestamp(value);
+  if (!parsed) return "Unknown time";
+  const datePart = parsed.toLocaleDateString(undefined, {
+    timeZone: CLIENT_TIME_ZONE,
+  });
+  const timePart = parsed.toLocaleTimeString(undefined, {
+    timeZone: CLIENT_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+  return `${datePart}, ${timePart}`;
+}
+
+function formatDate(value) {
+  const parsed = parseBackendTimestamp(value);
+  if (!parsed) return "Unknown date";
+  return parsed.toLocaleDateString(undefined, {
+    timeZone: CLIENT_TIME_ZONE,
+  });
+}
+
+function formatClock(value) {
+  const parsed = parseBackendTimestamp(value);
+  if (!parsed) return "Unknown time";
+  return parsed.toLocaleTimeString(undefined, {
+    timeZone: CLIENT_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+}
+
+function dateKeyForClientTz(value) {
+  const parsed = parseBackendTimestamp(value);
+  if (!parsed) return "";
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: CLIENT_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(parsed);
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  if (!year || !month || !day) return "";
+  return `${year}-${month}-${day}`;
+}
+
+function todayDateKey() {
+  return dateKeyForClientTz(new Date());
 }
 
 function toPercent(value) {
@@ -179,7 +254,7 @@ function renderBmiChart(records) {
         {points.map((p) => (
           <g key={p.id}>
             <circle cx={p.x} cy={p.y} r="3.5" fill="#5eead4" />
-            <title>{`${new Date(p.created_at).toLocaleDateString()} - BMI ${p.value.toFixed(2)}`}</title>
+            <title>{`${formatDate(p.created_at)} - BMI ${p.value.toFixed(2)}`}</title>
           </g>
         ))}
         <defs>
@@ -270,7 +345,7 @@ function renderVitalsChart({ title, valueKey, unit, stroke, samples }) {
         {points.map((point, index) => (
           <g key={`${valueKey}-${index}`}>
             <circle cx={point.x} cy={point.y} r="3.5" fill="#ffffff" />
-            <title>{`${new Date(point.timestamp).toLocaleTimeString()} - ${point.value.toFixed(1)} ${unit}`}</title>
+            <title>{`${formatClock(point.timestamp)} - ${point.value.toFixed(1)} ${unit}`}</title>
           </g>
         ))}
       </svg>
@@ -288,6 +363,8 @@ function AnalysisHistoryPage({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [vitalsSamples, setVitalsSamples] = useState([]);
+  const [selectedDay, setSelectedDay] = useState(todayDateKey());
+  const [pdfStatus, setPdfStatus] = useState("");
 
   useEffect(() => {
     const run = async () => {
@@ -327,6 +404,157 @@ function AnalysisHistoryPage({ user }) {
     run();
   }, [user]);
 
+  const downloadDayPdf = () => {
+    if (!selectedDay) {
+      setPdfStatus("Please choose a date first.");
+      return;
+    }
+
+    const isSameDay = (value) => dateKeyForClientTz(value) === selectedDay;
+
+    const daySymptoms = history.symptoms.filter((item) => isSameDay(item.created_at));
+    const dayVoice = history.voice.filter((item) => isSameDay(item.created_at));
+    const dayBmi = history.bmi.filter((item) => isSameDay(item.created_at));
+    const dayChat = history.chat.filter((item) => isSameDay(item.created_at));
+    const dayVitals = vitalsSamples.filter((item) => isSameDay(item.timestamp));
+
+    const totalCount =
+      daySymptoms.length +
+      dayVoice.length +
+      dayBmi.length +
+      dayChat.length +
+      dayVitals.length;
+
+    if (totalCount === 0) {
+      setPdfStatus("No analyses found for the selected day.");
+      return;
+    }
+
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const marginX = 40;
+    const maxTextWidth = pageWidth - marginX * 2;
+    let y = 44;
+
+    const ensureSpace = (requiredHeight = 22) => {
+      if (y + requiredHeight > pageHeight - 36) {
+        doc.addPage();
+        y = 44;
+      }
+    };
+
+    const addLine = (text, options = {}) => {
+      const { size = 10, indent = 0, bold = false } = options;
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(size);
+
+      const lines = doc.splitTextToSize(
+        String(text || ""),
+        maxTextWidth - indent,
+      );
+      const blockHeight = lines.length * (size + 2) + 2;
+      ensureSpace(blockHeight);
+      doc.text(lines, marginX + indent, y);
+      y += blockHeight;
+    };
+
+    const addSectionTitle = (title) => {
+      ensureSpace(24);
+      y += 4;
+      addLine(title, { size: 12, bold: true });
+    };
+
+    const addEmptySection = () => {
+      addLine("No records for this day.", { size: 10, indent: 12 });
+    };
+
+    addLine("VitalBit - Daily Analysis Report", { size: 16, bold: true });
+    addLine(`Date: ${selectedDay}`, { size: 11 });
+    addLine(`Client timezone: ${CLIENT_TIME_ZONE}`, { size: 10 });
+    addLine(`Total records: ${totalCount}`, { size: 10 });
+
+    addSectionTitle(`Symptom Analyses (${daySymptoms.length})`);
+    if (!daySymptoms.length) {
+      addEmptySection();
+    } else {
+      daySymptoms.forEach((item, index) => {
+        addLine(
+          `${index + 1}. ${formatTime(item.created_at)} | Symptoms: ${item.symptoms_text}`,
+          { indent: 12 },
+        );
+        const topPrediction = item.prediction_json?.predictions?.[0];
+        if (topPrediction) {
+          addLine(
+            `Top prediction: ${topPrediction.disease} (${toPercent(topPrediction.probability)})`,
+            { indent: 24 },
+          );
+        }
+        addLine(
+          `Confidence: ${toPercent(item.prediction_json?.confidence)}`,
+          { indent: 24 },
+        );
+      });
+    }
+
+    addSectionTitle(`Voice Analyses (${dayVoice.length})`);
+    if (!dayVoice.length) {
+      addEmptySection();
+    } else {
+      dayVoice.forEach((item, index) => {
+        addLine(`${index + 1}. ${formatTime(item.created_at)}`, { indent: 12 });
+        addLine(
+          `Risk: ${String(item.prediction_json?.risk || "unknown").replaceAll("_", " ")}`,
+          { indent: 24 },
+        );
+        addLine(
+          `Confidence: ${toPercent(item.prediction_json?.confidence)}`,
+          { indent: 24 },
+        );
+      });
+    }
+
+    addSectionTitle(`BMI Records (${dayBmi.length})`);
+    if (!dayBmi.length) {
+      addEmptySection();
+    } else {
+      dayBmi.forEach((item, index) => {
+        addLine(
+          `${index + 1}. ${formatTime(item.created_at)} | BMI ${Number(item.metric_value).toFixed(2)} | ${item.metric_payload?.category || "Unknown"}`,
+          { indent: 12 },
+        );
+      });
+    }
+
+    addSectionTitle(`Temperature & Pulse Samples (${dayVitals.length})`);
+    if (!dayVitals.length) {
+      addEmptySection();
+    } else {
+      dayVitals.forEach((item, index) => {
+        addLine(
+          `${index + 1}. ${formatTime(item.timestamp)} | Temp ${Number(item.temperatureC).toFixed(1)} | Pulse ${Number(item.pulseBpm).toFixed(0)} bpm`,
+          { indent: 12 },
+        );
+      });
+    }
+
+    addSectionTitle(`Chat Records (${dayChat.length})`);
+    if (!dayChat.length) {
+      addEmptySection();
+    } else {
+      dayChat.forEach((item, index) => {
+        addLine(
+          `${index + 1}. ${formatTime(item.created_at)} | ${item.role}`,
+          { indent: 12 },
+        );
+        addLine(item.message, { indent: 24 });
+      });
+    }
+
+    doc.save(`vitalbit-analysis-${selectedDay}.pdf`);
+    setPdfStatus(`Downloaded daily PDF for ${selectedDay}.`);
+  };
+
   return (
     <div className="relative min-h-screen bg-base pb-16 text-white">
       <div className="mx-auto w-[92%] max-w-7xl py-8">
@@ -336,6 +564,26 @@ function AnalysisHistoryPage({ user }) {
             <span className="font-bold tracking-wide">Analysis History</span>
           </div>
           <div className="flex items-center gap-3">
+            {user && (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/15 bg-black/20 px-2 py-2">
+                <input
+                  type="date"
+                  value={selectedDay}
+                  onChange={(e) => {
+                    setSelectedDay(e.target.value);
+                    setPdfStatus("");
+                  }}
+                  className="rounded-md border border-white/20 bg-white/5 px-2 py-1 text-xs text-white"
+                />
+                <button
+                  type="button"
+                  onClick={downloadDayPdf}
+                  className="rounded-md bg-mint px-3 py-1 text-xs font-semibold text-black transition hover:opacity-90"
+                >
+                  Download Day PDF
+                </button>
+              </div>
+            )}
             <Link
               to="/dashboard"
               className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/10"
@@ -362,6 +610,11 @@ function AnalysisHistoryPage({ user }) {
 
         {user && (
           <>
+            {!!pdfStatus && (
+              <section className="mb-4 rounded-2xl border border-mint/35 bg-mint/10 p-3 text-sm text-mint">
+                {pdfStatus}
+              </section>
+            )}
             <section className="mb-6 rounded-2xl border border-white/15 bg-white/5 p-4 md:p-5">
               <p className="text-sm uppercase tracking-[0.14em] text-slate-300">
                 History Timeline

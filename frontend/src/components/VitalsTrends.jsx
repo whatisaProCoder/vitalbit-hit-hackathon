@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { ActivitySquare, Link2, RefreshCcw } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ActivitySquare, Camera, Link2, RefreshCcw } from "lucide-react";
+import { Html5Qrcode } from "html5-qrcode";
 import api from "../lib/api";
 
 function toPoints(samples, valueKey, width, height, pad) {
@@ -101,6 +102,234 @@ function VitalsTrends({ user }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isScanningQr, setIsScanningQr] = useState(false);
+  const [cameraFacingMode, setCameraFacingMode] = useState("environment");
+  const [availableCameras, setAvailableCameras] = useState([]);
+  const [activeCameraIndex, setActiveCameraIndex] = useState(0);
+  const scannerRef = useRef(null);
+  const scannerElementId = useMemo(() => "watch-qr-reader", []);
+
+  const stopQrScanner = async () => {
+    const scanner = scannerRef.current;
+    if (!scanner) {
+      setIsScanningQr(false);
+      return;
+    }
+
+    try {
+      await scanner.stop();
+    } catch {
+      // Ignore stop errors when scanner has not fully started.
+    }
+
+    try {
+      await scanner.clear();
+    } catch {
+      // Ignore clear errors during teardown.
+    }
+
+    scannerRef.current = null;
+    setIsScanningQr(false);
+  };
+
+  const parseWatchQrPayload = (rawText) => {
+    const text = String(rawText || "").trim();
+    if (!text) {
+      return { deviceCode: "", serialNumber: "" };
+    }
+
+    try {
+      const parsed = JSON.parse(text);
+      return {
+        deviceCode: String(parsed.deviceCode || parsed.pairingCode || parsed.code || "").trim(),
+        serialNumber: String(parsed.serialNumber || parsed.serial || parsed.sn || "").trim(),
+      };
+    } catch {
+      // Continue to URL/text parsing.
+    }
+
+    if (text.startsWith("http://") || text.startsWith("https://") || text.startsWith("vitalbit://")) {
+      try {
+        const url = new URL(text.replace("vitalbit://", "https://"));
+        return {
+          deviceCode: String(
+            url.searchParams.get("deviceCode") ||
+              url.searchParams.get("pairingCode") ||
+              url.searchParams.get("code") ||
+              "",
+          ).trim(),
+          serialNumber: String(
+            url.searchParams.get("serialNumber") ||
+              url.searchParams.get("serial") ||
+              url.searchParams.get("sn") ||
+              "",
+          ).trim(),
+        };
+      } catch {
+        // Fall through to key-value text parsing.
+      }
+    }
+
+    const parts = text.split(/[;,&\n]/).map((part) => part.trim());
+    const keyValues = {};
+    for (const part of parts) {
+      const [rawKey, ...rawValueParts] = part.split(/[:=]/);
+      if (!rawKey || !rawValueParts.length) continue;
+      keyValues[rawKey.trim().toLowerCase()] = rawValueParts.join(":").trim();
+    }
+
+    return {
+      deviceCode: String(
+        keyValues.devicecode || keyValues.pairingcode || keyValues.code || "",
+      ).trim(),
+      serialNumber: String(
+        keyValues.serialnumber || keyValues.serial || keyValues.sn || "",
+      ).trim(),
+    };
+  };
+
+  const handleQrScanSuccess = async (decodedText) => {
+    const parsed = parseWatchQrPayload(decodedText);
+    const nextDeviceCode = parsed.deviceCode || deviceCode;
+    const nextSerialNumber = parsed.serialNumber || serialNumber;
+
+    setDeviceCode(nextDeviceCode);
+    setSerialNumber(nextSerialNumber);
+
+    await stopQrScanner();
+
+    if (!nextDeviceCode && !nextSerialNumber) {
+      setError("QR scanned, but no pairing code or serial number was found.");
+      return;
+    }
+
+    setSuccess("QR scanned successfully. Watch details filled in.");
+    await connectWatch(nextDeviceCode, nextSerialNumber);
+  };
+
+  const fetchCameras = async () => {
+    try {
+      const cameras = await Html5Qrcode.getCameras();
+      const safeCameras = Array.isArray(cameras) ? cameras : [];
+      setAvailableCameras(safeCameras);
+      if (safeCameras.length > 0) {
+        const rearIndex = safeCameras.findIndex((cam) =>
+          /rear|back|environment/i.test(String(cam.label || "")),
+        );
+        setActiveCameraIndex(rearIndex >= 0 ? rearIndex : 0);
+      }
+      return safeCameras;
+    } catch {
+      setAvailableCameras([]);
+      return [];
+    }
+  };
+
+  const startWithConfig = async (scanner, config) => {
+    await scanner.start(
+      config,
+      {
+        fps: 10,
+        qrbox: { width: 230, height: 230 },
+        aspectRatio: 1,
+      },
+      (decodedText) => {
+        handleQrScanSuccess(decodedText);
+      },
+      () => {
+        // Keep silent on intermittent decode failures.
+      },
+    );
+  };
+
+  const startQrScanner = async (facingMode = cameraFacingMode) => {
+    setError("");
+    setSuccess("");
+    setIsScanningQr(true);
+
+    setTimeout(async () => {
+      try {
+        const scanner = new Html5Qrcode(scannerElementId);
+        scannerRef.current = scanner;
+
+        const cameras = availableCameras.length ? availableCameras : await fetchCameras();
+
+        const attempts = [];
+
+        if (cameras.length > 0) {
+          const activeCamera = cameras[activeCameraIndex] || cameras[0];
+          if (activeCamera?.id) {
+            attempts.push(activeCamera.id);
+          }
+        }
+
+        attempts.push({ facingMode: { exact: facingMode } });
+        attempts.push({ facingMode });
+
+        if (cameras.length > 0) {
+          for (const cam of cameras) {
+            if (cam?.id && !attempts.includes(cam.id)) {
+              attempts.push(cam.id);
+            }
+          }
+        }
+
+        let started = false;
+        let lastError = null;
+        for (const attempt of attempts) {
+          try {
+            await startWithConfig(scanner, attempt);
+            started = true;
+            break;
+          } catch (err) {
+            lastError = err;
+          }
+        }
+
+        if (!started) {
+          throw lastError || new Error("Unable to access any camera device");
+        }
+      } catch (scanError) {
+        const rawMessage = String(scanError?.message || "").toLowerCase();
+        const permissionDenied =
+          rawMessage.includes("permission") ||
+          rawMessage.includes("notallowed") ||
+          rawMessage.includes("denied");
+        const insecureContext = rawMessage.includes("secure") || rawMessage.includes("https");
+
+        if (insecureContext) {
+          setError("Camera access needs a secure context (HTTPS or localhost).");
+        } else if (permissionDenied) {
+          setError("Camera permission denied. Allow camera access and retry.");
+        } else {
+          setError(
+            scanError?.message ||
+              "Could not start camera QR scanner. Check camera permissions.",
+          );
+        }
+        await stopQrScanner();
+      }
+    }, 0);
+  };
+
+  const flipQrCamera = async () => {
+    let nextMode = cameraFacingMode === "environment" ? "user" : "environment";
+    let nextIndex = activeCameraIndex;
+
+    if (availableCameras.length > 1) {
+      nextIndex = (activeCameraIndex + 1) % availableCameras.length;
+      const nextLabel = String(availableCameras[nextIndex]?.label || "").toLowerCase();
+      nextMode = /rear|back|environment/.test(nextLabel) ? "environment" : "user";
+      setActiveCameraIndex(nextIndex);
+    }
+
+    setCameraFacingMode(nextMode);
+
+    if (!isScanningQr) return;
+
+    await stopQrScanner();
+    await startQrScanner(nextMode);
+  };
 
   const loadTrendData = async () => {
     const { data } = await api.get("/api/vitals/trends");
@@ -139,8 +368,8 @@ function VitalsTrends({ user }) {
     }
   };
 
-  const handleConnectWatch = async () => {
-    if (!deviceCode.trim() && !serialNumber.trim()) {
+  const connectWatch = async (nextDeviceCode = deviceCode, nextSerialNumber = serialNumber) => {
+    if (!nextDeviceCode.trim() && !nextSerialNumber.trim()) {
       setError("Enter device code or serial number to connect your smart watch.");
       return;
     }
@@ -150,8 +379,8 @@ function VitalsTrends({ user }) {
     setSuccess("");
     try {
       const { data } = await api.post("/api/vitals/connect", {
-        deviceCode: deviceCode.trim(),
-        serialNumber: serialNumber.trim(),
+        deviceCode: nextDeviceCode.trim(),
+        serialNumber: nextSerialNumber.trim(),
         deviceName: "VitalBit Smart Watch",
       });
       setWatchStatus({ connected: true, watch: data.watch || null });
@@ -164,9 +393,23 @@ function VitalsTrends({ user }) {
     }
   };
 
+  const handleConnectWatch = async () => {
+    await connectWatch(deviceCode, serialNumber);
+  };
+
   useEffect(() => {
     loadStatusAndData();
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      stopQrScanner();
+    };
+  }, []);
+
+  useEffect(() => {
+    fetchCameras();
+  }, []);
 
   return (
     <div className="glass rounded-2xl p-6">
@@ -202,15 +445,58 @@ function VitalsTrends({ user }) {
               className="rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-white placeholder:text-slate-400"
             />
           </div>
-          <button
-            type="button"
-            onClick={handleConnectWatch}
-            disabled={loading}
-            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-sky px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky/90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Link2 className="h-4 w-4" />
-            {loading ? "Connecting..." : "Connect Watch"}
-          </button>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleConnectWatch}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-lg bg-sky px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Link2 className="h-4 w-4" />
+              {loading ? "Connecting..." : "Connect Watch"}
+            </button>
+            {!isScanningQr ? (
+              <button
+                type="button"
+                onClick={startQrScanner}
+                disabled={loading}
+                className="inline-flex items-center gap-2 rounded-lg border border-cyan-300/35 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Camera className="h-4 w-4" />
+                Scan QR from Watch
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={stopQrScanner}
+                className="inline-flex items-center gap-2 rounded-lg border border-rose-300/35 bg-rose-400/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:bg-rose-400/20"
+              >
+                Stop QR Scanner
+              </button>
+            )}
+          </div>
+
+          {isScanningQr && (
+            <div className="mt-3 rounded-xl border border-white/15 bg-black/30 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-xs uppercase tracking-[0.12em] text-slate-300">
+                  Point your camera at the watch QR code
+                </p>
+                <button
+                  type="button"
+                  onClick={flipQrCamera}
+                  className="rounded-md border border-cyan-300/35 bg-cyan-400/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-400/20"
+                >
+                  Flip Camera
+                </button>
+              </div>
+              <p className="mb-2 text-[11px] text-slate-300">
+                Using {cameraFacingMode === "environment" ? "rear" : "front"} camera
+                {availableCameras.length > 1 ? ` (${activeCameraIndex + 1}/${availableCameras.length})` : ""}
+              </p>
+              <div id={scannerElementId} className="overflow-hidden rounded-lg" />
+            </div>
+          )}
         </div>
       )}
 
