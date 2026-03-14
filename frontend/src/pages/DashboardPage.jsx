@@ -352,7 +352,7 @@ function DashboardPage({ user }) {
             <ResultPanel result={result} loading={loading} />
           </div>
           <BmiTracker user={user} onBmiRecorded={triggerDashboardRefresh} />
-          <VitalsTrends />
+          <VitalsTrends user={user} />
         </section>
 
         <section className="grid gap-4">

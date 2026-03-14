@@ -26,6 +26,299 @@ disease_profiles = {
 }
 
 
+test_guidance = {
+    "flu": [
+        {
+            "test": "Complete Blood Count (CBC)",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Any diagnostic lab or pathology center",
+                "Primary health center lab"
+            ]
+        },
+        {
+            "test": "Influenza Rapid Antigen Test",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Private diagnostic labs",
+                "Hospital outpatient sample collection counters"
+            ]
+        }
+    ],
+    "covid": [
+        {
+            "test": "RT-PCR for SARS-CoV-2",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Government approved COVID testing centers",
+                "Private diagnostic labs with home collection"
+            ]
+        },
+        {
+            "test": "CRP / D-Dimer / Ferritin panel (if moderate symptoms)",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        }
+    ],
+    "asthma": [
+        {
+            "test": "Peak Flow Test",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Pulmonary labs",
+                "Respiratory clinics"
+            ]
+        },
+        {
+            "test": "Spirometry",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        }
+    ],
+    "tuberculosis": [
+        {
+            "test": "Sputum AFB Smear",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Government TB centers",
+                "District hospital labs"
+            ]
+        },
+        {
+            "test": "Chest X-Ray",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        }
+    ],
+    "malaria": [
+        {
+            "test": "Malaria Antigen Rapid Test",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Pathology labs",
+                "Rural health center labs"
+            ]
+        },
+        {
+            "test": "Peripheral Blood Smear",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Government and private labs"
+            ]
+        }
+    ],
+    "dengue": [
+        {
+            "test": "Dengue NS1 Antigen",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Private pathology labs",
+                "Hospital sample collection centers"
+            ]
+        },
+        {
+            "test": "Dengue IgM / IgG",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Diagnostic centers"
+            ]
+        }
+    ],
+    "pneumonia": [
+        {
+            "test": "Chest X-Ray",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        },
+        {
+            "test": "CBC and CRP",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "General pathology labs"
+            ]
+        }
+    ],
+    "bronchitis": [
+        {
+            "test": "CBC",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Any pathology lab"
+            ]
+        },
+        {
+            "test": "Chest X-Ray (if persistent symptoms)",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        }
+    ],
+    "anemia": [
+        {
+            "test": "CBC",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Any diagnostic lab",
+                "Community health center lab"
+            ]
+        },
+        {
+            "test": "Serum Ferritin / B12 / Folate",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Private pathology labs"
+            ]
+        }
+    ],
+    "dehydration": [
+        {
+            "test": "Serum Electrolytes",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Diagnostic labs"
+            ]
+        },
+        {
+            "test": "Urine Routine",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Any pathology center"
+            ]
+        }
+    ],
+    "typhoid": [
+        {
+            "test": "TyphiDot / IgM",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Private diagnostic labs"
+            ]
+        },
+        {
+            "test": "Blood Culture",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        }
+    ],
+    "gastroenteritis": [
+        {
+            "test": "Stool Routine Examination",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Diagnostic labs"
+            ]
+        },
+        {
+            "test": "Electrolyte Panel",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "General pathology labs"
+            ]
+        }
+    ],
+    "sinusitis": [
+        {
+            "test": "X-Ray PNS / CT PNS",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        },
+        {
+            "test": "CBC",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Any pathology lab"
+            ]
+        }
+    ],
+    "migraine": [
+        {
+            "test": "Neurology Clinical Evaluation",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        },
+        {
+            "test": "MRI Brain (red-flag symptoms)",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        }
+    ],
+    "urinary_tract_infection": [
+        {
+            "test": "Urine Routine and Microscopy",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Any diagnostic center",
+                "Hospital lab collection counters"
+            ]
+        },
+        {
+            "test": "Urine Culture",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Pathology and microbiology labs"
+            ]
+        }
+    ],
+    "allergy": [
+        {
+            "test": "Absolute Eosinophil Count / IgE",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "General pathology labs"
+            ]
+        },
+        {
+            "test": "Allergen-specific panel",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        }
+    ],
+    "otitis": [
+        {
+            "test": "ENT Otoscopy",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        },
+        {
+            "test": "Ear Swab Culture (if discharge present)",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        }
+    ],
+    "diabetes_warning": [
+        {
+            "test": "Fasting Blood Sugar / HbA1c",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Any diagnostic lab",
+                "Diabetes screening camps"
+            ]
+        },
+        {
+            "test": "Lipid Profile",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "General pathology labs"
+            ]
+        }
+    ],
+    "hypertension_warning": [
+        {
+            "test": "Blood Pressure Monitoring",
+            "doctorApprovalRequired": False,
+            "whereWithoutDoctorApproval": [
+                "Pharmacy BP kiosks",
+                "Community health center"
+            ]
+        },
+        {
+            "test": "Kidney Function Test and ECG",
+            "doctorApprovalRequired": True,
+            "whereWithoutDoctorApproval": []
+        }
+    ]
+}
+
+
 class SymptomPredictor:
     def __init__(self) -> None:
         self.embedder = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
@@ -43,6 +336,17 @@ class SymptomPredictor:
             d: sum(self.token_idf.get(token, 1.0) for token in tokens)
             for d, tokens in self.profile_tokens.items()
         }
+
+    def _tests_for_disease(self, disease: str):
+        guidance = test_guidance.get(disease, [])
+        return [
+            {
+                "test": item.get("test", "Clinical evaluation"),
+                "doctorApprovalRequired": bool(item.get("doctorApprovalRequired", False)),
+                "whereWithoutDoctorApproval": item.get("whereWithoutDoctorApproval", [])
+            }
+            for item in guidance
+        ]
 
     @staticmethod
     def _tokenize(text: str):
@@ -126,14 +430,35 @@ class SymptomPredictor:
         probs = torch.softmax(top_values / self.temperature, dim=0)
         predictions = []
         for i, idx in enumerate(top_indices.tolist()):
+            disease = self.diseases[idx]
             predictions.append(
                 {
-                    "disease": self.diseases[idx],
-                    "probability": round(float(probs[i].item()), 4)
+                    "disease": disease,
+                    "probability": round(float(probs[i].item()), 4),
+                    "recommendedTests": self._tests_for_disease(disease)
                 }
             )
 
         top_probability = float(probs[0].item())
         top_score = float(top_values[0].item())
         confidence = round(min(0.98, (0.45 * top_probability) + (0.55 * top_score)), 4)
-        return {"predictions": predictions, "confidence": confidence, "ageUsed": age}
+        top_disease = predictions[0]["disease"] if predictions else None
+        recommended_tests = self._tests_for_disease(top_disease) if top_disease else []
+        tests_requiring_approval = [
+            test for test in recommended_tests
+            if test.get("doctorApprovalRequired")
+        ]
+        tests_without_approval = [
+            test for test in recommended_tests
+            if not test.get("doctorApprovalRequired")
+        ]
+
+        return {
+            "predictions": predictions,
+            "confidence": confidence,
+            "ageUsed": age,
+            "topDisease": top_disease,
+            "recommendedTests": recommended_tests,
+            "testsRequiringDoctorApproval": tests_requiring_approval,
+            "testsWithoutDoctorApproval": tests_without_approval
+        }

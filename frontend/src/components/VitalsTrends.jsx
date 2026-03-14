@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivitySquare } from "lucide-react";
+import { ActivitySquare, Link2, RefreshCcw } from "lucide-react";
 import api from "../lib/api";
 
 function toPoints(samples, valueKey, width, height, pad) {
@@ -93,21 +93,80 @@ function VitalsChart({ title, valueKey, unit, colorClass, samples }) {
   );
 }
 
-function VitalsTrends() {
+function VitalsTrends({ user }) {
   const [samples, setSamples] = useState([]);
+  const [watchStatus, setWatchStatus] = useState({ connected: false, watch: null });
+  const [deviceCode, setDeviceCode] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    const loadVitals = async () => {
-      try {
-        const { data } = await api.get("/api/vitals/mock");
-        setSamples(Array.isArray(data.samples) ? data.samples : []);
-      } catch {
+  const loadTrendData = async () => {
+    const { data } = await api.get("/api/vitals/trends");
+    setSamples(Array.isArray(data.samples) ? data.samples : []);
+  };
+
+  const loadStatusAndData = async () => {
+    if (!user) {
+      setWatchStatus({ connected: false, watch: null });
+      setSamples([]);
+      setError("");
+      setSuccess("");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const { data } = await api.get("/api/vitals/status");
+      setWatchStatus({
+        connected: Boolean(data.connected),
+        watch: data.watch || null,
+      });
+
+      if (data.connected) {
+        await loadTrendData();
+      } else {
         setSamples([]);
       }
-    };
+    } catch (err) {
+      setError(err.response?.data?.error || "Could not load smart watch status");
+      setWatchStatus({ connected: false, watch: null });
+      setSamples([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    loadVitals();
-  }, []);
+  const handleConnectWatch = async () => {
+    if (!deviceCode.trim() && !serialNumber.trim()) {
+      setError("Enter device code or serial number to connect your smart watch.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    try {
+      const { data } = await api.post("/api/vitals/connect", {
+        deviceCode: deviceCode.trim(),
+        serialNumber: serialNumber.trim(),
+        deviceName: "VitalBit Smart Watch",
+      });
+      setWatchStatus({ connected: true, watch: data.watch || null });
+      setSuccess("Smart watch connected. Temperature and pulse trends are now syncing.");
+      await loadTrendData();
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to connect smart watch");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStatusAndData();
+  }, [user]);
 
   return (
     <div className="glass rounded-2xl p-6">
@@ -115,16 +174,76 @@ function VitalsTrends() {
         <ActivitySquare className="h-5 w-5 text-mint" />
         <h3 className="text-xl font-bold">Temperature & Pulse Trends</h3>
       </div>
-      <p className="mb-4 text-sm text-slate-300">
-        Mock device telemetry for dashboard illustration. This will be replaced
-        by live hardware streaming.
-      </p>
+
+      {!user && (
+        <p className="mb-4 text-sm text-slate-300">
+          Login is required to connect your smart watch and view your live vitals history.
+        </p>
+      )}
+
+      {user && !watchStatus.connected && (
+        <div className="mb-4 rounded-xl border border-cyan-300/25 bg-cyan-500/10 p-4">
+          <p className="text-sm text-cyan-100">
+            Connect your VitalBit smart watch to start syncing Temperature and Pulse trends.
+          </p>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            <input
+              type="text"
+              value={deviceCode}
+              onChange={(e) => setDeviceCode(e.target.value)}
+              placeholder="Enter watch pairing code"
+              className="rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-white placeholder:text-slate-400"
+            />
+            <input
+              type="text"
+              value={serialNumber}
+              onChange={(e) => setSerialNumber(e.target.value)}
+              placeholder="Or enter watch serial number"
+              className="rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-white placeholder:text-slate-400"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleConnectWatch}
+            disabled={loading}
+            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-sky px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky/90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Link2 className="h-4 w-4" />
+            {loading ? "Connecting..." : "Connect Watch"}
+          </button>
+        </div>
+      )}
+
+      {user && watchStatus.connected && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3">
+          <div>
+            <p className="text-sm font-semibold text-emerald-100">
+              {watchStatus.watch?.deviceName || "VitalBit Smart Watch"} connected
+            </p>
+            <p className="text-xs text-emerald-200/80">
+              Connected and syncing Temperature and Pulse data to your dashboard.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={loadStatusAndData}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-emerald-300/35 bg-transparent px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <RefreshCcw className="h-3.5 w-3.5" />
+            Refresh Trends
+          </button>
+        </div>
+      )}
+
+      {error && <p className="mb-3 text-sm text-rose-300">{error}</p>}
+      {success && <p className="mb-3 text-sm text-emerald-300">{success}</p>}
 
       <div className="grid gap-4">
         <VitalsChart
           title="Body Temperature"
           valueKey="temperatureC"
-          unit="F"
+          unit="C"
           colorClass="stroke-rose-300"
           samples={samples}
         />
