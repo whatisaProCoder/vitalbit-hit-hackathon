@@ -53,7 +53,16 @@ BEGIN
     ALTER TABLE users ADD CONSTRAINT users_phone_key UNIQUE (phone);
   END IF;
 END $$;
-CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (email) WHERE email IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'email'
+  ) THEN
+    EXECUTE 'CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (email) WHERE email IS NOT NULL';
+  END IF;
+END $$;
 CREATE UNIQUE INDEX IF NOT EXISTS users_google_id_unique_idx ON users (google_id) WHERE google_id IS NOT NULL;
 ALTER TABLE users
   ALTER COLUMN created_at TYPE TIMESTAMPTZ

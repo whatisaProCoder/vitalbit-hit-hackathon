@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { LogIn, UserPlus } from "lucide-react";
-import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import api, { setAuthToken, clearAuthToken } from "../lib/api";
 
 function AuthPanel({ user, onAuthChange, initialMode = "login" }) {
@@ -17,56 +16,10 @@ function AuthPanel({ user, onAuthChange, initialMode = "login" }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [googleClientId, setGoogleClientId] = useState(
-    import.meta.env.VITE_GOOGLE_CLIENT_ID || "",
-  );
-  const [googleNonce, setGoogleNonce] = useState("");
-  const googleEnabled = Boolean(googleClientId);
 
   useEffect(() => {
     setMode(safeMode);
   }, [safeMode]);
-
-  useEffect(() => {
-    let active = true;
-
-    const loadGoogleConfig = async () => {
-      if (googleClientId && googleNonce) return;
-
-      try {
-        const { data } = await api.get("/api/auth/google-config");
-        if (!active) return;
-        if (data?.enabled && data?.clientId) {
-          setGoogleClientId(String(data.clientId));
-          setGoogleNonce(String(data.nonce || ""));
-        } else {
-          setGoogleNonce("");
-        }
-      } catch {
-        // Keep phone/password auth available if config fetch fails.
-      }
-    };
-
-    loadGoogleConfig();
-
-    return () => {
-      active = false;
-    };
-  }, [googleClientId, googleNonce]);
-
-  const refreshGoogleConfig = async () => {
-    try {
-      const { data } = await api.get("/api/auth/google-config");
-      if (data?.enabled && data?.clientId) {
-        setGoogleClientId(String(data.clientId));
-        setGoogleNonce(String(data.nonce || ""));
-      } else {
-        setGoogleNonce("");
-      }
-    } catch {
-      setGoogleNonce("");
-    }
-  };
 
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -145,46 +98,6 @@ function AuthPanel({ user, onAuthChange, initialMode = "login" }) {
     onAuthChange(null);
   };
 
-  const submitGoogleCredential = async (credential) => {
-    if (!credential) {
-      setError("Google authorization failed. Please try again.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-      const { data } = await api.post("/api/auth/google", {
-        credential,
-        mode,
-        nonce: googleNonce,
-      });
-      setAuthToken(data.token);
-      onAuthChange(data.user);
-      setForm({
-        name: "",
-        phone: "",
-        password: "",
-        age: "",
-        gender: "",
-        address: "",
-        postalCode: "",
-      });
-    } catch (err) {
-      const apiError = err.response?.data;
-      if (apiError?.details) {
-        setError(
-          `${apiError.error || "Google authorization failed"}: ${apiError.details}`,
-        );
-      } else {
-        setError(apiError?.error || "Google authorization failed");
-      }
-    } finally {
-      setLoading(false);
-      refreshGoogleConfig();
-    }
-  };
-
   return (
     <div className="glass rounded-2xl p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -228,33 +141,6 @@ function AuthPanel({ user, onAuthChange, initialMode = "login" }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {googleEnabled && (
-            <div className="rounded-xl border border-white/15 bg-white/5 p-3">
-              <GoogleOAuthProvider clientId={googleClientId}>
-                <div className="flex justify-center">
-                  <GoogleLogin
-                    onSuccess={(credentialResponse) =>
-                      submitGoogleCredential(credentialResponse?.credential)
-                    }
-                    onError={() => setError("Google authorization failed")}
-                    text={mode === "register" ? "signup_with" : "signin_with"}
-                    shape="pill"
-                    width="320"
-                    nonce={googleNonce || undefined}
-                  />
-                </div>
-              </GoogleOAuthProvider>
-            </div>
-          )}
-
-          {googleEnabled && (
-            <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-slate-400">
-              <span className="h-px flex-1 bg-white/10" />
-              <span>or continue with phone</span>
-              <span className="h-px flex-1 bg-white/10" />
-            </div>
-          )}
-
           {mode === "register" && (
             <div className="grid gap-3 md:grid-cols-2">
               <input
