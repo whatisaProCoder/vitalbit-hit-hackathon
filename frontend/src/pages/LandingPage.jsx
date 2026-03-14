@@ -111,6 +111,11 @@ const architectureSteps = [
   { title: "Health Prediction", Icon: Stethoscope },
 ];
 
+const smartwatchPlan = {
+  trialLabel: "3 Months",
+  paidLabel: "Rs 100 / month",
+};
+
 function LandingPage({ user }) {
   const rootRef = useRef(null);
 
@@ -269,9 +274,9 @@ function LandingPage({ user }) {
               Always-On Health Intelligence
             </p>
             <h1 className="hero-title max-w-4xl text-5xl font-extrabold leading-tight md:text-7xl">
-              Like a personal
-              <span className="gradient-text"> assistant</span>
-              , built for every community
+              Like a Personal
+              <span className="gradient-text"> Assistant</span>
+              , Built for Every Community
             </h1>
             <p className="hero-sub mt-8 max-w-2xl text-lg text-slate-200 md:text-xl">
               Detect risk early with symptom intelligence, voice insights,
@@ -323,6 +328,7 @@ function LandingPage({ user }) {
                 <p className="mt-1 text-xl font-bold">Live Vitals</p>
               </div>
             </div>
+
           </div>
 
           <div className="hero-watch relative mx-auto h-[300px] w-full max-w-[360px] md:h-[360px] md:max-w-[390px] lg:h-[430px] lg:max-w-[420px]">
@@ -358,6 +364,44 @@ function LandingPage({ user }) {
           </div>
         </div>
       </header>
+
+      <section className="reveal-section pricing-band relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden border-y border-mint/30 bg-gradient-to-r from-[#0e2f4d] via-[#0b3e5f] to-[#0c273f] py-12 md:py-14">
+        <div className="pointer-events-none absolute -left-16 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-mint/30 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-cyan-300/20 blur-3xl" />
+
+        <div className="mx-auto grid w-[92%] max-w-7xl items-center gap-6 md:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-mint">
+              Smartwatch Pricing
+            </p>
+            <h2 className="mt-2 text-3xl font-extrabold leading-tight text-white md:text-5xl">
+              {smartwatchPlan.trialLabel} Free, then {smartwatchPlan.paidLabel}
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm text-slate-100 md:text-lg">
+              Every VitalBit smartwatch purchase includes full website subscription for 3 months,
+              then auto-renews at Rs 100 monthly with renewal reminders.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/25 bg-white/10 p-4 backdrop-blur-sm md:p-6">
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="rounded-xl bg-black/20 px-3 py-4">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-slate-300">Trial</p>
+                <p className="mt-1 text-2xl font-bold text-mint">3 Months</p>
+                <p className="text-xs text-slate-300">Included</p>
+              </div>
+              <div className="rounded-xl bg-black/20 px-3 py-4">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-slate-300">After Trial</p>
+                <p className="mt-1 text-2xl font-bold text-white">Rs 100</p>
+                <p className="text-xs text-slate-300">Per Month</p>
+              </div>
+            </div>
+            <p className="mt-3 text-center text-xs text-slate-200">
+              Cancel anytime before next cycle.
+            </p>
+          </div>
+        </div>
+      </section>
 
       <section className="reveal-section relative overflow-hidden grid-noise py-24">
         <div className="pointer-events-none absolute -right-10 top-12 h-56 w-56 rounded-full bg-sky/10 blur-3xl" />

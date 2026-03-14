@@ -43,6 +43,17 @@ function AuthPage({ user, onAuthChange }) {
               ? "Sign up to unlock personal tracking, BMI history, and AI health chat logs."
               : "Log in to continue to your health dashboard and recent analysis activity."}
           </p>
+
+          <div className="mb-6 rounded-xl border border-mint/40 bg-mint/10 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-mint">
+              Smartwatch Subscription Plan
+            </p>
+            <p className="mt-2 text-sm text-slate-100 md:text-base">
+              Buy the VitalBit smartwatch and get 3 months of website access free.
+              After that, the plan renews at Rs 100 per month.
+            </p>
+          </div>
+
           <AuthPanel
             user={user}
             initialMode={mode}

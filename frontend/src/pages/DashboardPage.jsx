@@ -84,6 +84,11 @@ const distanceKm = (lat1, lon1, lat2, lon2) => {
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+const subscriptionPlan = {
+  trialMonths: 3,
+  monthlyPriceInr: 100,
+};
+
 function DashboardPage({ user }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -294,6 +299,23 @@ function DashboardPage({ user }) {
             Track symptom analysis, voice diagnostics, BMI, and care
             recommendations in one place.
           </p>
+        </section>
+
+        <section className="surface-card mb-6 rounded-2xl border border-mint/30 p-4 md:p-5">
+          <p className="section-kicker w-fit text-mint">
+            Smartwatch Membership
+          </p>
+          <h2 className="mt-1 text-xl font-bold text-white md:text-2xl">
+            3 months free, then Rs {subscriptionPlan.monthlyPriceInr}/month
+          </h2>
+          <p className="mt-2 text-slate-200">
+            Every smartwatch purchase unlocks {subscriptionPlan.trialMonths} months of free website subscription.
+            After the trial, billing continues at Rs {subscriptionPlan.monthlyPriceInr} monthly.
+          </p>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm text-slate-100">
+            <CheckCircle2 className="h-4 w-4 text-mint" />
+            Renewal reminders are sent before billing.
+          </div>
         </section>
 
         {!user && (
