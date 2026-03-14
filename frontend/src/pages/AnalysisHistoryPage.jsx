@@ -396,7 +396,9 @@ function AnalysisHistoryPage({ user }) {
         });
 
         try {
-          const { data: vitalsData } = await api.get("/api/vitals/mock");
+          const { data: vitalsData } = await api.get("/api/vitals/trends", {
+            params: { limit: 200 },
+          });
           setVitalsSamples(
             Array.isArray(vitalsData.samples) ? vitalsData.samples : [],
           );

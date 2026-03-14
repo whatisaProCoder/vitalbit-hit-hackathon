@@ -8,6 +8,7 @@ import {
   QrCode,
   RefreshCcw,
   Smartphone,
+  Unplug,
 } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import api from "../lib/api";
@@ -117,6 +118,7 @@ function VitalsTrends({ user }) {
   const [activeCameraIndex, setActiveCameraIndex] = useState(0);
   const scannerRef = useRef(null);
   const scannerElementId = useMemo(() => "watch-qr-reader", []);
+  const hasLiveSamples = samples.length > 0;
 
   const stopQrScanner = async () => {
     const scanner = scannerRef.current;
@@ -393,7 +395,7 @@ function VitalsTrends({ user }) {
         deviceName: "VitalBit Smart Watch",
       });
       setWatchStatus({ connected: true, watch: data.watch || null });
-      setSuccess("Smart watch connected. Temperature and pulse trends are now syncing.");
+      setSuccess("Smart watch connected. Waiting for live temperature and pulse samples.");
       await loadTrendData();
     } catch (err) {
       setError(err.response?.data?.error || "Failed to connect smart watch");
@@ -404,6 +406,22 @@ function VitalsTrends({ user }) {
 
   const handleConnectWatch = async () => {
     await connectWatch(deviceCode, serialNumber);
+  };
+
+  const handleDisconnectWatch = async () => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    try {
+      await api.post("/api/vitals/disconnect");
+      setWatchStatus({ connected: false, watch: null });
+      setSamples([]);
+      setSuccess("Smart watch disconnected.");
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to disconnect smart watch");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -567,9 +585,20 @@ function VitalsTrends({ user }) {
                   {watchStatus.watch?.deviceName || "VitalBit Smart Watch"} connected
                 </p>
                 <p className="mt-1 text-xs text-emerald-200/85">
-                  Sync is active. Temperature and pulse samples are flowing to your dashboard.
+                  {hasLiveSamples
+                    ? "Sync is active. Live temperature and pulse samples are flowing to your dashboard."
+                    : "Watch is connected. No live samples received yet."}
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={handleDisconnectWatch}
+                disabled={loading}
+                className="inline-flex items-center gap-2 rounded-lg border border-rose-300/40 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Unplug className="h-3.5 w-3.5" />
+                Disconnect Watch
+              </button>
             </div>
           </div>
         )}
