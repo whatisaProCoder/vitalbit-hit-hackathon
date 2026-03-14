@@ -14,7 +14,7 @@ import api from "../lib/api";
 
 function SectionCard({ title, icon: Icon, count, children }) {
   return (
-    <section className="rounded-2xl border border-white/15 bg-white/5 p-4 md:p-5">
+    <section className="rounded-2xl border border-white/15 bg-white/5 p-4 shadow-lg shadow-black/10 backdrop-blur md:p-5">
       <div className="mb-3 flex items-center justify-between">
         <div className="inline-flex items-center gap-2">
           <Icon className="h-4 w-4 text-mint" />
@@ -366,6 +366,17 @@ function AnalysisHistoryPage({ user }) {
   const [selectedDay, setSelectedDay] = useState(todayDateKey());
   const [pdfStatus, setPdfStatus] = useState("");
 
+  const totalHistoryRecords =
+    history.symptoms.length +
+    history.voice.length +
+    history.bmi.length +
+    history.chat.length +
+    vitalsSamples.length;
+
+  const isPdfWarning =
+    pdfStatus.toLowerCase().includes("no analyses") ||
+    pdfStatus.toLowerCase().includes("please choose");
+
   useEffect(() => {
     const run = async () => {
       if (!user) {
@@ -558,32 +569,18 @@ function AnalysisHistoryPage({ user }) {
   return (
     <div className="relative min-h-screen bg-base pb-16 text-white">
       <div className="mx-auto w-[92%] max-w-7xl py-8">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur md:px-6">
-          <div className="inline-flex items-center gap-2">
-            <Activity className="h-5 w-5 text-mint" />
-            <span className="font-bold tracking-wide">Analysis History</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {user && (
-              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/15 bg-black/20 px-2 py-2">
-                <input
-                  type="date"
-                  value={selectedDay}
-                  onChange={(e) => {
-                    setSelectedDay(e.target.value);
-                    setPdfStatus("");
-                  }}
-                  className="rounded-md border border-white/20 bg-white/5 px-2 py-1 text-xs text-white"
-                />
-                <button
-                  type="button"
-                  onClick={downloadDayPdf}
-                  className="rounded-md bg-mint px-3 py-1 text-xs font-semibold text-black transition hover:opacity-90"
-                >
-                  Download Day PDF
-                </button>
+        <div className="mb-8 rounded-2xl border border-white/15 bg-gradient-to-r from-white/5 via-white/10 to-white/5 px-4 py-4 backdrop-blur md:px-6 md:py-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">
+                <Activity className="h-4 w-4" />
+                Health Timeline
               </div>
-            )}
+              <h1 className="mt-3 text-2xl font-bold md:text-3xl">Analysis History</h1>
+              <p className="mt-1 text-sm text-slate-300">
+                Review every recorded insight across symptoms, voice, BMI, vitals, and chat.
+              </p>
+            </div>
             <Link
               to="/dashboard"
               className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/10"
@@ -591,6 +588,37 @@ function AnalysisHistoryPage({ user }) {
               <ArrowLeft className="h-4 w-4" />
               Back to Dashboard
             </Link>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/20 bg-black/20 px-3 py-1 text-xs text-slate-200">
+                Total records: {totalHistoryRecords}
+              </span>
+              <span className="rounded-full border border-white/20 bg-black/20 px-3 py-1 text-xs text-slate-200">
+                Timezone: {CLIENT_TIME_ZONE}
+              </span>
+            </div>
+            {user && (
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/15 bg-black/25 px-3 py-2">
+                <input
+                  type="date"
+                  value={selectedDay}
+                  onChange={(e) => {
+                    setSelectedDay(e.target.value);
+                    setPdfStatus("");
+                  }}
+                  className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-300/60"
+                />
+                <button
+                  type="button"
+                  onClick={downloadDayPdf}
+                  className="rounded-lg bg-mint px-3 py-1.5 text-xs font-semibold text-black transition hover:opacity-90"
+                >
+                  Download Day PDF
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -611,7 +639,13 @@ function AnalysisHistoryPage({ user }) {
         {user && (
           <>
             {!!pdfStatus && (
-              <section className="mb-4 rounded-2xl border border-mint/35 bg-mint/10 p-3 text-sm text-mint">
+              <section
+                className={`mb-4 rounded-2xl p-3 text-sm ${
+                  isPdfWarning
+                    ? "border border-amber-300/35 bg-amber-500/10 text-amber-100"
+                    : "border border-mint/35 bg-mint/10 text-mint"
+                }`}
+              >
                 {pdfStatus}
               </section>
             )}
@@ -626,6 +660,28 @@ function AnalysisHistoryPage({ user }) {
                 View every symptom prediction, voice risk report, BMI entry, and
                 chat record linked to your account.
               </p>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="rounded-xl border border-white/15 bg-black/20 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Symptoms</p>
+                  <p className="text-lg font-semibold text-white">{history.symptoms.length}</p>
+                </div>
+                <div className="rounded-xl border border-white/15 bg-black/20 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Voice</p>
+                  <p className="text-lg font-semibold text-white">{history.voice.length}</p>
+                </div>
+                <div className="rounded-xl border border-white/15 bg-black/20 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">BMI</p>
+                  <p className="text-lg font-semibold text-white">{history.bmi.length}</p>
+                </div>
+                <div className="rounded-xl border border-white/15 bg-black/20 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Vitals</p>
+                  <p className="text-lg font-semibold text-white">{vitalsSamples.length}</p>
+                </div>
+                <div className="rounded-xl border border-white/15 bg-black/20 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Chat</p>
+                  <p className="text-lg font-semibold text-white">{history.chat.length}</p>
+                </div>
+              </div>
             </section>
 
             {loading && (

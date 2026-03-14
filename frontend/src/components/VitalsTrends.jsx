@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivitySquare, Camera, Link2, RefreshCcw } from "lucide-react";
+import {
+  ActivitySquare,
+  AlertCircle,
+  Camera,
+  CheckCircle2,
+  Link2,
+  QrCode,
+  RefreshCcw,
+  Smartphone,
+} from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import api from "../lib/api";
 
@@ -412,120 +421,174 @@ function VitalsTrends({ user }) {
   }, []);
 
   return (
-    <div className="glass rounded-2xl p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <ActivitySquare className="h-5 w-5 text-mint" />
-        <h3 className="text-xl font-bold">Temperature & Pulse Trends</h3>
-      </div>
+    <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-[#071225] via-[#0b1930] to-[#0d213f] p-5 shadow-2xl md:p-6">
+      <div className="pointer-events-none absolute -left-20 -top-20 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 -right-20 h-48 w-48 rounded-full bg-emerald-400/15 blur-3xl" />
 
-      {!user && (
-        <p className="mb-4 text-sm text-slate-300">
-          Login is required to connect your smart watch and view your live vitals history.
-        </p>
-      )}
-
-      {user && !watchStatus.connected && (
-        <div className="mb-4 rounded-xl border border-cyan-300/25 bg-cyan-500/10 p-4">
-          <p className="text-sm text-cyan-100">
-            Connect your VitalBit smart watch to start syncing Temperature and Pulse trends.
-          </p>
-          <div className="mt-3 grid gap-2 md:grid-cols-2">
-            <input
-              type="text"
-              value={deviceCode}
-              onChange={(e) => setDeviceCode(e.target.value)}
-              placeholder="Enter watch pairing code"
-              className="rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-white placeholder:text-slate-400"
-            />
-            <input
-              type="text"
-              value={serialNumber}
-              onChange={(e) => setSerialNumber(e.target.value)}
-              placeholder="Or enter watch serial number"
-              className="rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm text-white placeholder:text-slate-400"
-            />
+      <div className="relative">
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1">
+              <ActivitySquare className="h-4 w-4 text-cyan-200" />
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">
+                Vitals Monitoring
+              </span>
+            </div>
+            <h3 className="mt-3 text-2xl font-bold text-white md:text-3xl">
+              Temperature and Pulse Trends
+            </h3>
+            <p className="mt-1 text-sm text-slate-300">
+              Pair your watch once and keep your health vitals synced in real time.
+            </p>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+
+          {user && watchStatus.connected && (
             <button
               type="button"
-              onClick={handleConnectWatch}
+              onClick={loadStatusAndData}
               disabled={loading}
-              className="inline-flex items-center gap-2 rounded-lg bg-sky px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-300/35 bg-emerald-400/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Link2 className="h-4 w-4" />
-              {loading ? "Connecting..." : "Connect Watch"}
+              <RefreshCcw className="h-4 w-4" />
+              Refresh Trends
             </button>
-            {!isScanningQr ? (
-              <button
-                type="button"
-                onClick={startQrScanner}
-                disabled={loading}
-                className="inline-flex items-center gap-2 rounded-lg border border-cyan-300/35 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Camera className="h-4 w-4" />
-                Scan QR from Watch
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={stopQrScanner}
-                className="inline-flex items-center gap-2 rounded-lg border border-rose-300/35 bg-rose-400/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:bg-rose-400/20"
-              >
-                Stop QR Scanner
-              </button>
-            )}
-          </div>
-
-          {isScanningQr && (
-            <div className="mt-3 rounded-xl border border-white/15 bg-black/30 p-3">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-xs uppercase tracking-[0.12em] text-slate-300">
-                  Point your camera at the watch QR code
-                </p>
-                <button
-                  type="button"
-                  onClick={flipQrCamera}
-                  className="rounded-md border border-cyan-300/35 bg-cyan-400/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-400/20"
-                >
-                  Flip Camera
-                </button>
-              </div>
-              <p className="mb-2 text-[11px] text-slate-300">
-                Using {cameraFacingMode === "environment" ? "rear" : "front"} camera
-                {availableCameras.length > 1 ? ` (${activeCameraIndex + 1}/${availableCameras.length})` : ""}
-              </p>
-              <div id={scannerElementId} className="overflow-hidden rounded-lg" />
-            </div>
           )}
         </div>
-      )}
 
-      {user && watchStatus.connected && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3">
-          <div>
-            <p className="text-sm font-semibold text-emerald-100">
-              {watchStatus.watch?.deviceName || "VitalBit Smart Watch"} connected
-            </p>
-            <p className="text-xs text-emerald-200/80">
-              Connected and syncing Temperature and Pulse data to your dashboard.
-            </p>
+        {!user && (
+          <div className="mb-4 rounded-2xl border border-white/15 bg-black/20 p-4 text-sm text-slate-200">
+            Login is required to connect your smart watch and view your live vitals history.
           </div>
-          <button
-            type="button"
-            onClick={loadStatusAndData}
-            disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg border border-emerald-300/35 bg-transparent px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <RefreshCcw className="h-3.5 w-3.5" />
-            Refresh Trends
-          </button>
-        </div>
-      )}
+        )}
 
-      {error && <p className="mb-3 text-sm text-rose-300">{error}</p>}
-      {success && <p className="mb-3 text-sm text-emerald-300">{success}</p>}
+        {user && !watchStatus.connected && (
+          <div className="mb-5 rounded-2xl border border-cyan-300/30 bg-cyan-400/10 p-4 md:p-5">
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-cyan-100">
+              <Smartphone className="h-4 w-4" />
+              <p className="text-sm font-semibold">
+                Connect your VitalBit smart watch to start syncing.
+              </p>
+            </div>
 
-      <div className="grid gap-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-300">
+                  Pairing Code
+                </span>
+                <input
+                  type="text"
+                  value={deviceCode}
+                  onChange={(e) => setDeviceCode(e.target.value)}
+                  placeholder="Enter watch pairing code"
+                  className="w-full rounded-xl border border-white/20 bg-black/25 px-3 py-2 text-sm text-white placeholder:text-slate-400 outline-none transition focus:border-cyan-300/60"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-300">
+                  Serial Number
+                </span>
+                <input
+                  type="text"
+                  value={serialNumber}
+                  onChange={(e) => setSerialNumber(e.target.value)}
+                  placeholder="Or enter watch serial number"
+                  className="w-full rounded-xl border border-white/20 bg-black/25 px-3 py-2 text-sm text-white placeholder:text-slate-400 outline-none transition focus:border-cyan-300/60"
+                />
+              </label>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleConnectWatch}
+                disabled={loading}
+                className="inline-flex items-center gap-2 rounded-xl bg-sky px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Link2 className="h-4 w-4" />
+                {loading ? "Connecting..." : "Connect Watch"}
+              </button>
+
+              {!isScanningQr ? (
+                <button
+                  type="button"
+                  onClick={startQrScanner}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/35 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <QrCode className="h-4 w-4" />
+                  Scan QR from Watch
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={stopQrScanner}
+                  className="inline-flex items-center gap-2 rounded-xl border border-rose-300/35 bg-rose-400/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:bg-rose-400/20"
+                >
+                  Stop QR Scanner
+                </button>
+              )}
+            </div>
+
+            {isScanningQr && (
+              <div className="mt-4 rounded-2xl border border-white/20 bg-black/35 p-3 md:p-4">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs uppercase tracking-[0.14em] text-slate-300">
+                    Point your camera at the watch QR code
+                  </p>
+                  <button
+                    type="button"
+                    onClick={flipQrCamera}
+                    className="inline-flex items-center gap-1 rounded-lg border border-cyan-300/35 bg-cyan-400/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-400/20"
+                  >
+                    <Camera className="h-3 w-3" />
+                    Flip Camera
+                  </button>
+                </div>
+                <p className="mb-3 text-[11px] text-slate-300">
+                  Using {cameraFacingMode === "environment" ? "rear" : "front"} camera
+                  {availableCameras.length > 1
+                    ? ` (${activeCameraIndex + 1}/${availableCameras.length})`
+                    : ""}
+                </p>
+                <div className="relative overflow-hidden rounded-xl border border-cyan-300/20 bg-slate-950/70 p-1">
+                  <div id={scannerElementId} className="overflow-hidden rounded-lg" />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {user && watchStatus.connected && (
+          <div className="mb-4 rounded-2xl border border-emerald-400/35 bg-emerald-500/10 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="flex items-center gap-2 text-sm font-semibold text-emerald-100">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {watchStatus.watch?.deviceName || "VitalBit Smart Watch"} connected
+                </p>
+                <p className="mt-1 text-xs text-emerald-200/85">
+                  Sync is active. Temperature and pulse samples are flowing to your dashboard.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-3 flex items-start gap-2 rounded-xl border border-rose-300/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-100">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-3 flex items-start gap-2 rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-2">
         <VitalsChart
           title="Body Temperature"
           valueKey="temperatureC"
@@ -540,6 +603,7 @@ function VitalsTrends({ user }) {
           colorClass="stroke-sky-300"
           samples={samples}
         />
+      </div>
       </div>
     </div>
   );

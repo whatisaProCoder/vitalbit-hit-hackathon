@@ -239,9 +239,9 @@ function DashboardPage({ user }) {
   };
 
   return (
-    <div className="relative min-h-screen bg-base text-white">
+    <div className="aurora-bg relative min-h-screen bg-base text-white">
       <div className="mx-auto w-[92%] max-w-7xl py-8">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur md:px-6">
+        <div className="premium-nav mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3 md:px-6">
           <div className="inline-flex items-center gap-2">
             <Activity className="h-5 w-5 text-mint" />
             <span className="font-bold tracking-wide">VitalBit Dashboard</span>
@@ -250,20 +250,20 @@ function DashboardPage({ user }) {
             {user && (
               <Link
                 to="/profile"
-                className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                className="btn-ghost inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold"
               >
                 Profile Settings
               </Link>
             )}
             <Link
               to="/analysis-history"
-              className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+              className="btn-ghost inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold"
             >
               All Analysis Results
             </Link>
             <Link
               to="/"
-              className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+              className="btn-ghost inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Landing
@@ -272,7 +272,7 @@ function DashboardPage({ user }) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+                className="btn-ghost inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold"
               >
                 <LogOut className="h-4 w-4" />
                 Logout
@@ -281,8 +281,8 @@ function DashboardPage({ user }) {
           </div>
         </div>
 
-        <section className="mb-6 rounded-2xl border border-white/15 bg-white/5 p-4 md:p-5">
-          <p className="text-sm uppercase tracking-[0.14em] text-slate-300">
+        <section className="surface-card mb-6 rounded-2xl p-4 md:p-5">
+          <p className="section-kicker w-fit">
             Welcome
           </p>
           <h1 className="mt-1 text-2xl font-bold text-white md:text-3xl">
@@ -297,14 +297,14 @@ function DashboardPage({ user }) {
         </section>
 
         {!user && (
-          <section className="mb-6 rounded-2xl border border-white/15 bg-white/5 p-4">
+          <section className="surface-card mb-6 rounded-2xl p-4">
             <p className="text-slate-200">
               You are browsing as a guest. Log in to save BMI, chat history, and
               analysis tracking.
             </p>
             <Link
               to="/auth"
-              className="mt-3 inline-flex rounded-lg bg-sky px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky/90"
+              className="btn-primary mt-3 inline-flex rounded-lg px-4 py-2 text-sm font-semibold text-white transition"
             >
               Login or Sign Up
             </Link>
@@ -355,7 +355,7 @@ function DashboardPage({ user }) {
                     setVoiceAutoStartSignal((prev) => prev + 1);
                   }
                 }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky px-5 py-3 font-semibold text-white transition hover:bg-sky/90"
+                className="btn-primary inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold text-white transition"
               >
                 <MessageCircle className="h-5 w-5" />
                 {user ? "Open Voice Chat" : "Login to Use Voice Chat"}
@@ -495,7 +495,7 @@ function DashboardPage({ user }) {
         <button
           type="button"
           onClick={() => setIsChatOpen((prev) => !prev)}
-          className="inline-flex items-center gap-2 rounded-full bg-sky px-5 py-3 font-semibold text-white shadow-lg transition hover:bg-sky/90"
+          className="btn-primary inline-flex items-center gap-2 rounded-full px-5 py-3 font-semibold text-white shadow-lg transition"
         >
           <MessageCircle className="h-5 w-5" />
           {isChatOpen ? "Close Chat" : "Open Chat"}

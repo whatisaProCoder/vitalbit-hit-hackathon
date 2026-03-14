@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -113,7 +113,6 @@ const architectureSteps = [
 
 function LandingPage({ user }) {
   const rootRef = useRef(null);
-  const [watchImageFailed, setWatchImageFailed] = useState(false);
 
   const handleLogout = () => {
     clearAuthToken();
@@ -220,45 +219,77 @@ function LandingPage({ user }) {
   );
 
   return (
-    <div ref={rootRef} className="relative overflow-hidden bg-base text-white">
+    <div ref={rootRef} className="aurora-bg relative overflow-hidden bg-base text-white">
       <div className="parallax-shape pointer-events-none absolute left-0 top-0 h-screen w-full bg-hero-radial opacity-70" />
 
       <header className="relative mx-auto min-h-screen w-[92%] max-w-7xl overflow-hidden py-10">
-        <nav className="mb-20 flex items-center justify-between px-1 py-3 md:px-1">
+        <nav className="premium-nav mb-16 flex items-center justify-between rounded-2xl px-4 py-3 md:px-5">
           <div className="inline-flex items-center gap-2">
             <Activity className="h-5 w-5 text-mint" />
             <span className="font-bold tracking-wide">VitalBit</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            {user ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="btn-primary rounded-lg px-4 py-2 font-semibold"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="btn-ghost inline-flex items-center gap-2 rounded-lg px-4 py-2 font-semibold"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/auth" className="btn-ghost rounded-lg px-4 py-2 font-semibold">
+                  Sign In
+                </Link>
+                <Link
+                  to="/auth?mode=register"
+                  className="btn-primary rounded-lg px-4 py-2 font-semibold"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </nav>
 
         <div className="relative z-10 grid items-center gap-10 py-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="flex flex-col justify-center">
-            <p className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-slate-100">
+            <p className="section-kicker mb-6 w-fit">
               <Activity className="h-4 w-4 text-mint" />
-              VitalBit Health Intelligence
+              Always-On Health Intelligence
             </p>
             <h1 className="hero-title max-w-4xl text-5xl font-extrabold leading-tight md:text-7xl">
-              AI Health Assistant for{" "}
-              <span className="gradient-text">Rural Communities</span>
+              Like a personal
+              <span className="gradient-text"> assistant</span>
+              , built for every community
             </h1>
             <p className="hero-sub mt-8 max-w-2xl text-lg text-slate-200 md:text-xl">
-              Detect diseases early with symptom intelligence, voice
-              diagnostics, personalized guidance, and instant hospital
-              discovery.
+              Detect risk early with symptom intelligence, voice insights,
+              continuous vitals, and immediate care routing in one focused flow.
             </p>
             <div className="hero-sub mt-10 flex flex-wrap gap-4">
               {user ? (
                 <>
                   <Link
                     to="/dashboard"
-                    className="rounded-xl bg-sky px-6 py-3 font-semibold text-white transition hover:bg-sky/90"
+                    className="btn-primary rounded-xl px-6 py-3 font-semibold transition"
                   >
                     Open Dashboard
                   </Link>
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-6 py-3 font-semibold transition hover:bg-white/10"
+                    className="btn-ghost inline-flex items-center gap-2 rounded-xl px-6 py-3 font-semibold transition"
                   >
                     <LogOut className="h-4 w-4" />
                     Logout
@@ -268,18 +299,29 @@ function LandingPage({ user }) {
                 <>
                   <Link
                     to="/auth?mode=register"
-                    className="rounded-xl bg-sky px-6 py-3 font-semibold text-white transition hover:bg-sky/90"
+                    className="btn-primary rounded-xl px-6 py-3 font-semibold transition"
                   >
-                    Register Now
+                    Create Account
                   </Link>
                   <Link
                     to="/auth"
-                    className="rounded-xl border border-white/25 px-6 py-3 font-semibold"
+                    className="btn-ghost rounded-xl px-6 py-3 font-semibold"
                   >
-                    Login
+                    Explore Demo
                   </Link>
                 </>
               )}
+            </div>
+
+            <div className="hero-sub mt-8 grid gap-3 sm:grid-cols-2">
+              <div className="stat-pill rounded-xl px-4 py-3">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-slate-300">AI Services</p>
+                <p className="mt-1 text-xl font-bold">Symptom + Voice</p>
+              </div>
+              <div className="stat-pill rounded-xl px-4 py-3">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-slate-300">Monitoring</p>
+                <p className="mt-1 text-xl font-bold">Live Vitals</p>
+              </div>
             </div>
           </div>
 
@@ -320,7 +362,8 @@ function LandingPage({ user }) {
       <section className="reveal-section relative overflow-hidden grid-noise py-24">
         <div className="pointer-events-none absolute -right-10 top-12 h-56 w-56 rounded-full bg-sky/10 blur-3xl" />
         <div className="mx-auto w-[92%] max-w-7xl">
-          <h2 className="text-4xl font-bold md:text-5xl">
+          <p className="section-kicker">Problem</p>
+          <h2 className="mt-4 text-4xl font-bold md:text-5xl">
             The Rural Healthcare Challenge
           </h2>
           <p className="mt-4 max-w-2xl text-slate-200">
@@ -328,21 +371,21 @@ function LandingPage({ user }) {
             specialists, and low health awareness.
           </p>
           <div className="problem-grid mt-10 grid gap-4 md:grid-cols-3">
-            <article className="problem-card glass rounded-2xl p-6">
+            <article className="problem-card surface-card rounded-2xl p-6">
               <Building2 className="mb-3 h-6 w-6 text-sky" />
               <h3 className="mb-2 text-2xl font-bold">Limited Access</h3>
               <p className="text-slate-200">
                 Remote populations struggle to access hospitals in time.
               </p>
             </article>
-            <article className="problem-card glass rounded-2xl p-6">
+            <article className="problem-card surface-card rounded-2xl p-6">
               <AlertCircle className="mb-3 h-6 w-6 text-sky" />
               <h3 className="mb-2 text-2xl font-bold">Doctor Shortages</h3>
               <p className="text-slate-200">
                 Few clinicians are available for large rural coverage areas.
               </p>
             </article>
-            <article className="problem-card glass rounded-2xl p-6">
+            <article className="problem-card surface-card rounded-2xl p-6">
               <BarChart3 className="mb-3 h-6 w-6 text-sky" />
               <h3 className="mb-2 text-2xl font-bold">Lack of Awareness</h3>
               <p className="text-slate-200">
@@ -356,13 +399,14 @@ function LandingPage({ user }) {
       <section className="reveal-section relative overflow-hidden py-24">
         <div className="pointer-events-none absolute right-1/3 top-12 h-56 w-56 rounded-full bg-cyan-300/10 blur-3xl" />
         <div className="mx-auto w-[92%] max-w-7xl">
-          <h2 className="text-4xl font-bold md:text-5xl">Our Solution</h2>
+          <p className="section-kicker">Solution</p>
+          <h2 className="mt-4 text-4xl font-bold md:text-5xl">Our Solution</h2>
           <p className="mt-4 max-w-3xl text-slate-200">
             VitalBit blends on-device capture, AI inference, and local care
             discovery into one practical workflow for early intervention.
           </p>
           <div className="solution-grid mt-10 grid gap-4 md:grid-cols-3">
-            <article className="solution-card glass rounded-2xl p-6">
+            <article className="solution-card surface-card rounded-2xl p-6">
               <BrainCircuit className="mb-3 h-6 w-6 text-sky" />
               <h3 className="mb-2 text-2xl font-bold">AI Symptom Analysis</h3>
               <p className="text-slate-200">
@@ -370,7 +414,7 @@ function LandingPage({ user }) {
                 calibrated confidence.
               </p>
             </article>
-            <article className="solution-card glass rounded-2xl p-6">
+            <article className="solution-card surface-card rounded-2xl p-6">
               <Mic className="mb-3 h-6 w-6 text-sky" />
               <h3 className="mb-2 text-2xl font-bold">Voice Detection</h3>
               <p className="text-slate-200">
@@ -378,7 +422,7 @@ function LandingPage({ user }) {
                 low-literacy and low-connectivity users.
               </p>
             </article>
-            <article className="solution-card glass rounded-2xl p-6">
+            <article className="solution-card surface-card rounded-2xl p-6">
               <Stethoscope className="mb-3 h-6 w-6 text-sky" />
               <h3 className="mb-2 text-2xl font-bold">Actionable Guidance</h3>
               <p className="text-slate-200">
@@ -393,12 +437,13 @@ function LandingPage({ user }) {
       <section className="reveal-section relative overflow-hidden py-24">
         <div className="pointer-events-none absolute -left-10 top-16 h-56 w-56 rounded-full bg-mint/10 blur-3xl" />
         <div className="mx-auto w-[92%] max-w-7xl">
-          <h2 className="text-4xl font-bold md:text-5xl">
+          <p className="section-kicker">Architecture</p>
+          <h2 className="mt-4 text-4xl font-bold md:text-5xl">
             System Architecture
           </h2>
           <div className="mt-10 grid gap-4 md:grid-cols-5">
             {architectureSteps.map(({ title, Icon }) => (
-              <div key={title} className="glass rounded-2xl p-5 text-center">
+              <div key={title} className="surface-card rounded-2xl p-5 text-center">
                 <Icon className="mx-auto mb-3 h-7 w-7 text-sky" />
                 <p className="text-lg font-semibold">{title}</p>
               </div>
@@ -411,14 +456,15 @@ function LandingPage({ user }) {
         <div className="pointer-events-none absolute right-1/2 top-8 h-64 w-64 translate-x-1/2 rounded-full bg-cyan-300/10 blur-3xl" />
         <div className="mx-auto flex w-[92%] max-w-6xl items-center">
           <div className="w-full">
-            <h2 className="mb-8 text-4xl font-bold md:text-5xl">
+            <p className="section-kicker">Capabilities</p>
+            <h2 className="mb-8 mt-4 text-4xl font-bold md:text-5xl">
               Feature Section
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
               {featureCards.map(({ title, text, Icon }) => (
                 <article
                   key={title}
-                  className="story-card glass rounded-2xl p-6"
+                  className="story-card surface-card rounded-2xl p-6"
                 >
                   <Icon className="mb-3 h-6 w-6 text-cyan-200" />
                   <h3 className="text-2xl font-bold">{title}</h3>
@@ -434,7 +480,7 @@ function LandingPage({ user }) {
                   return (
                     <article
                       key={step.title}
-                      className="story-card glass rounded-2xl p-6"
+                      className="story-card surface-card rounded-2xl p-6"
                     >
                       <div className="mb-2 flex items-center justify-between">
                         <span className="rounded-full border border-cyan-200/40 px-2 py-1 text-xs font-semibold text-cyan-200">
@@ -458,7 +504,7 @@ function LandingPage({ user }) {
       <section className="reveal-section relative overflow-hidden py-20">
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/10 blur-3xl" />
         <div className="mx-auto w-[92%] max-w-5xl">
-          <div className="glass rounded-3xl border border-cyan-200/20 px-6 py-10 text-center md:px-10 md:py-14">
+          <div className="surface-card rounded-3xl border border-cyan-200/20 px-6 py-10 text-center md:px-10 md:py-14">
             <p className="text-sm uppercase tracking-[0.2em] text-cyan-200/80">
               Ready To Deploy
             </p>
@@ -473,7 +519,7 @@ function LandingPage({ user }) {
               {user ? (
                 <Link
                   to="/dashboard"
-                  className="rounded-xl bg-sky px-6 py-3 font-semibold text-white transition hover:bg-sky/90"
+                  className="btn-primary rounded-xl px-6 py-3 font-semibold text-white transition"
                 >
                   Open Dashboard
                 </Link>
@@ -481,13 +527,13 @@ function LandingPage({ user }) {
                 <>
                   <Link
                     to="/auth?mode=register"
-                    className="rounded-xl bg-sky px-6 py-3 font-semibold text-white transition hover:bg-sky/90"
+                    className="btn-primary rounded-xl px-6 py-3 font-semibold text-white transition"
                   >
                     Register Now
                   </Link>
                   <Link
                     to="/auth"
-                    className="rounded-xl border border-white/30 bg-white/5 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
+                    className="btn-ghost rounded-xl px-6 py-3 font-semibold text-white transition"
                   >
                     Login
                   </Link>
